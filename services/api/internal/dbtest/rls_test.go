@@ -1,6 +1,9 @@
-// Package db holds the sqlc-generated queries (Epic 01 task 01.9) and the
-// tests that prove the database enforces what the application assumes.
-package db
+// Package dbtest proves the database enforces what the application assumes.
+//
+// These tests live outside internal/db on purpose: that directory is
+// sqlc-generated and hand-written files there are blocked by
+// .claude/hooks/pre-edit-guard.sh.
+package dbtest
 
 import (
 	"context"

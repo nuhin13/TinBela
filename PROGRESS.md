@@ -49,7 +49,9 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
       000002 forces RLS as defence in depth. Test:
       `services/api/internal/db/rls_test.go`.
 - [x] 01.8 Indexes verified with EXPLAIN — evidence in `docs/eng/indexes.md`
-- [ ] 01.9 sqlc config + first queries
+- [x] 01.9 sqlc config + first queries — 15 queries across 4 files, all
+      tenant-filtered; generated code committed (CI has no sqlc); hand-edit
+      blocked by `pre-edit-guard.sh`, verified
 - [x] 01.10 Seed script
 
 ---

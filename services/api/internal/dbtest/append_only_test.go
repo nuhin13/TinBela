@@ -1,4 +1,10 @@
-package db
+// Package dbtest proves the database enforces what the application
+// assumes.
+//
+// These tests live outside internal/db on purpose: that directory is
+// sqlc-generated, and hand-written files there are blocked by
+// .claude/hooks/pre-edit-guard.sh.
+package dbtest
 
 import (
 	"context"

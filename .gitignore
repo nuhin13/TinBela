@@ -30,7 +30,9 @@ service-account*.json
 
 # Generated (regenerate with `make proto` / `make sqlc` / `make tokens`)
 /packages/api-clients/gen/
-/services/api/internal/db/*.gen.go
+# sqlc output under services/api/internal/db IS committed: CI runs `make
+# verify` without installing sqlc, so the tree has to compile as checked
+# out. Never hand-edit it -- .claude/hooks/pre-edit-guard.sh blocks that.
 
 # OS / editors
 .DS_Store
