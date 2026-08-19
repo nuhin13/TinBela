@@ -2,6 +2,10 @@
 # Runs at the end of an agent turn. The turn is not clean until verify is green.
 set -uo pipefail
 
+# Already blocked once this turn — honour stop_hook_active or we loop forever.
+INPUT=$(cat 2>/dev/null || true)
+case "$INPUT" in *'"stop_hook_active":true'*) exit 0 ;; esac
+
 if [ ! -f Makefile ]; then exit 0; fi
 
 echo "── running make verify ──"

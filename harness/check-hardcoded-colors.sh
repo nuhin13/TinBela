@@ -4,7 +4,7 @@ set -uo pipefail
 DIR="${1:-apps/manager/lib}"
 [ -d "$DIR" ] || exit 0
 
-HITS=$(grep -rn --include='*.dart' -E "Color\(0x|Colors\.[a-z]" "$DIR" \
+HITS=$(grep -rn --include='*.dart' -E "Color\(0x|\bColors\.[a-z]" "$DIR" \
   | grep -v -E "tokens\.g\.dart|// ignore: hardcoded" || true)
 
 if [ -n "$HITS" ]; then
