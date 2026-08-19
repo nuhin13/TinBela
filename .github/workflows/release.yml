@@ -1,0 +1,31 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version: { description: "Version, e.g. 1.0.0", required: true }
+
+# Builds only. Publishing to Play is manual and deliberate.
+jobs:
+  build-aab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Build signed AAB
+        run: |
+          echo "Epic 19 task 19.2 — wire keystore from secrets, then:"
+          echo "  cd apps/manager && flutter build appbundle --release"
+      - name: Pre-publish checklist
+        run: |
+          cat <<'CHECK'
+          ── Walk these manually before publishing (Epic 19) ──
+          [ ] Store listing complete in bn-BD AND en-US
+          [ ] Data safety form matches the shipped build exactly
+          [ ] Content rating done; target audience 18+
+          [ ] Permissions: INTERNET only. No READ_SMS.
+          [ ] Privacy, terms, delete-account pages live
+          [ ] Previous AAB retained for rollback
+          [ ] Remote kill switch tested against production
+          CHECK

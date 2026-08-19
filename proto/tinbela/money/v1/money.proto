@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package tinbela.money.v1;
+
+import "tinbela/core/v1/common.proto";
+
+enum EntryKind {
+  ENTRY_KIND_UNSPECIFIED = 0;
+  ENTRY_KIND_FOOD_COST = 1;    // bazar
+  ENTRY_KIND_DEPOSIT = 2;      // জমা
+  ENTRY_KIND_SHARED_COST = 3;  // P2
+  ENTRY_KIND_RENT_PAYOUT = 4;  // P2
+  ENTRY_KIND_ADJUST = 5;       // rounding remainder, opening balance
+}
+
+message AddLedgerEntryRequest {
+  string mess_id = 1;
+  EntryKind kind = 2;
+  int64 amount_paisa = 3;             // NEVER a float
+  string category = 4;
+  string membership_id = 5;           // required for DEPOSIT
+  tinbela.core.v1.Date occurred_on = 6;
+  string note = 7;
+}
+message AddLedgerEntryResponse { LedgerEntry entry = 1; }
+
+message LedgerEntry {
+  string id = 1;
+  EntryKind kind = 2;
+  tinbela.core.v1.Money amount = 3;
+  string category = 4;
+  string membership_id = 5;
+  string member_display_name = 6;
+  tinbela.core.v1.Date occurred_on = 7;
+  string note = 8;
+  string entered_by_name = 9;
+  bool voided = 10;
+}
+
+message VoidLedgerEntryRequest { string mess_id = 1; string entry_id = 2; }
+message VoidLedgerEntryResponse {}
+
+// Every Money field below carries its MathExplain. That is non-negotiable.
+message GetAccountsRequest { string mess_id = 1; string period_id = 2; }
+message GetAccountsResponse {
+  tinbela.core.v1.Money meal_rate = 1;
+  tinbela.core.v1.Money total_food = 2;
+  tinbela.core.v1.Money total_deposits = 3;
+  int32 total_meals = 4;
+  // The floor-division remainder. Visible, owned by the mess, never
+  // silently absorbed by a member.
+  tinbela.core.v1.Money remainder = 5;
+  repeated MemberBalance members = 6;
+}
+
+message MemberBalance {
+  string membership_id = 1;
+  string display_name = 2;
+  int32 meals_qty = 3;
+  tinbela.core.v1.Money food_cost = 4;
+  tinbela.core.v1.Money deposits = 5;
+  // positive = ফেরত পাবেন · negative = দিতে হবে
+  tinbela.core.v1.Money balance = 6;
+}
+
+message PreviewCloseRequest { string mess_id = 1; string period_id = 2; }
+message PreviewCloseResponse {
+  GetAccountsResponse accounts = 1;
+  repeated string warnings = 2;
+}
+
+message ClosePeriodRequest { string mess_id = 1; string period_id = 2; }
+message ClosePeriodResponse {
+  string statement_id = 1;
+  string next_period_id = 2;
+}
+
+message GetStatementRequest { string mess_id = 1; string period_id = 2; }
+message GetStatementResponse {
+  string period_label = 1;   // "জুলাই ২০২৬"
+  GetAccountsResponse accounts = 2;
+  string closed_at = 3;
+  bool immutable = 4;        // always true once closed
+}
+
+service MoneyService {
+  rpc AddLedgerEntry(AddLedgerEntryRequest) returns (AddLedgerEntryResponse);
+  rpc VoidLedgerEntry(VoidLedgerEntryRequest) returns (VoidLedgerEntryResponse);
+  rpc GetAccounts(GetAccountsRequest) returns (GetAccountsResponse);
+  rpc PreviewClose(PreviewCloseRequest) returns (PreviewCloseResponse);
+  rpc ClosePeriod(ClosePeriodRequest) returns (ClosePeriodResponse);
+  rpc GetStatement(GetStatementRequest) returns (GetStatementResponse);
+}

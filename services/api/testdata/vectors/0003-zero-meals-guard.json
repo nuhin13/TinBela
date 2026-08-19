@@ -1,0 +1,32 @@
+{
+  "name": "zero_meals_guard",
+  "description": "Division guard: a period with food cost but zero meals must yield rate 0 and remainder equal to the full food cost. It must not panic and must not divide by zero.",
+  "range": { "from": "2026-07-01", "to": "2026-07-31" },
+  "input": {
+    "memberships": [
+      { "id": "m1", "joined_at": "2026-07-01", "left_at": null }
+    ],
+    "slots": [
+      { "id": "s1", "order": 1, "active": true }
+    ],
+    "patterns": [
+      { "membership_id": "m1", "slot_id": "s1", "dow_mask": 0, "qty": 0, "effective_from": "2026-07-01" }
+    ],
+    "day_flags": [],
+    "exceptions": [],
+    "ledger": [
+      { "id": "l1", "kind": "FOOD_COST", "amount_paisa": 50000, "membership_id": null, "occurred_on": "2026-07-10", "void_of": null }
+    ]
+  },
+  "expect": {
+    "settlement": {
+      "total_meals": 0,
+      "food_paisa": 50000,
+      "meal_rate_paisa": 0,
+      "remainder_paisa": 50000,
+      "members": [
+        { "membership_id": "m1", "meals_qty": 0, "food_cost_paisa": 0, "deposits_paisa": 0, "balance_paisa": 0 }
+      ]
+    }
+  }
+}

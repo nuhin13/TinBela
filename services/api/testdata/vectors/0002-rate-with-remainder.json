@@ -1,0 +1,35 @@
+{
+  "name": "rate_with_remainder",
+  "description": "Floor division leaves a remainder. It MUST be surfaced as a visible ADJUST owned by the mess, never silently absorbed by a member. Someone always asks where the leftover went.",
+  "range": { "from": "2026-07-01", "to": "2026-07-03" },
+  "input": {
+    "memberships": [
+      { "id": "m1", "joined_at": "2026-07-01", "left_at": null },
+      { "id": "m2", "joined_at": "2026-07-01", "left_at": null }
+    ],
+    "slots": [
+      { "id": "s1", "order": 1, "active": true }
+    ],
+    "patterns": [
+      { "membership_id": "m1", "slot_id": "s1", "dow_mask": 127, "qty": 1, "effective_from": "2026-07-01" },
+      { "membership_id": "m2", "slot_id": "s1", "dow_mask": 127, "qty": 1, "effective_from": "2026-07-01" }
+    ],
+    "day_flags": [],
+    "exceptions": [],
+    "ledger": [
+      { "id": "l1", "kind": "FOOD_COST", "amount_paisa": 1000, "membership_id": null, "occurred_on": "2026-07-01", "void_of": null }
+    ]
+  },
+  "expect": {
+    "settlement": {
+      "total_meals": 6,
+      "food_paisa": 1000,
+      "meal_rate_paisa": 166,
+      "remainder_paisa": 4,
+      "members": [
+        { "membership_id": "m1", "meals_qty": 3, "food_cost_paisa": 498, "deposits_paisa": 0, "balance_paisa": -498 },
+        { "membership_id": "m2", "meals_qty": 3, "food_cost_paisa": 498, "deposits_paisa": 0, "balance_paisa": -498 }
+      ]
+    }
+  }
+}

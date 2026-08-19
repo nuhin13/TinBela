@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [{ "type": "command", "command": "./.claude/hooks/pre-edit-guard.sh" }] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "./.claude/hooks/post-edit-format.sh" }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "./.claude/hooks/stop-verify.sh" }] }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(make *)", "Bash(go *)", "Bash(buf *)", "Bash(sqlc *)",
+      "Bash(flutter *)", "Bash(pnpm *)", "Bash(git status)", "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)", "Bash(git push --force*)", "Bash(psql*DROP*)",
+      "Read(./secrets/**)", "Read(./.env)"
+    ]
+  }
+}

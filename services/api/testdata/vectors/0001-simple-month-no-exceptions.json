@@ -1,0 +1,32 @@
+{
+  "name": "simple_month_no_exceptions",
+  "description": "Law 1: a full pattern with zero exceptions over July yields exactly qty x 31 days. A normal month costs zero entries. This is the product stated as a test.",
+  "range": { "from": "2026-07-01", "to": "2026-07-31" },
+  "input": {
+    "memberships": [
+      { "id": "m1", "joined_at": "2026-07-01", "left_at": null }
+    ],
+    "slots": [
+      { "id": "s1", "order": 1, "active": true }
+    ],
+    "patterns": [
+      { "membership_id": "m1", "slot_id": "s1", "dow_mask": 127, "qty": 1, "effective_from": "2026-07-01" }
+    ],
+    "day_flags": [],
+    "exceptions": [],
+    "ledger": [
+      { "id": "l1", "kind": "FOOD_COST", "amount_paisa": 310000, "membership_id": null, "occurred_on": "2026-07-15", "void_of": null }
+    ]
+  },
+  "expect": {
+    "settlement": {
+      "total_meals": 31,
+      "food_paisa": 310000,
+      "meal_rate_paisa": 10000,
+      "remainder_paisa": 0,
+      "members": [
+        { "membership_id": "m1", "meals_qty": 31, "food_cost_paisa": 310000, "deposits_paisa": 0, "balance_paisa": -310000 }
+      ]
+    }
+  }
+}

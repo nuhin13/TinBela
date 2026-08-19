@@ -1,0 +1,13 @@
+[tools]
+go        = "1.23"
+node      = "22"
+pnpm      = "9"
+flutter   = "stable"
+buf       = "latest"
+sqlc      = "latest"
+"go:github.com/golang-migrate/migrate/v4/cmd/migrate" = "latest"
+"go:github.com/golangci/golangci-lint/cmd/golangci-lint" = "latest"
+
+[env]
+PG_DSN = "postgres://tinbela:tinbela@localhost:5432/tinbela?sslmode=disable"
+TZ     = "Asia/Dhaka"

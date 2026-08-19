@@ -1,0 +1,265 @@
+# TinBela MVP — Progress
+
+Tick as you go. Full task detail in `docs/product/EPICS.md`.
+★ = hand-written by the founder, never delegated to an agent.
+
+**Rule:** an epic is done only when its GATE passes. Not when the tasks are ticked.
+
+---
+
+## Day 1 — Foundation
+
+### EPIC 00 — Genesis ★ · *gate: fresh clone → running stack + green verify in 10 min*
+- [x] 00.1 Monorepo skeleton
+- [x] 00.2 `CLAUDE.md` root context
+- [x] 00.3 Planning docs in `docs/product/`
+- [x] 00.4 ADRs 0001–0015
+- [x] 00.5 ADR template + `/adr` command
+- [x] 00.6 Design tokens → Dart + Tailwind + CSS
+- [x] 00.7 Component inventory (`docs/design/`)
+- [x] 00.8 Tooling pins (`.mise.toml`)
+- [x] 00.9 Makefile with `verify`
+- [x] 00.10 CI pipeline
+- [x] 00.11 Agent harness (`.claude/`)
+- [x] 00.12 Conventions doc
+- [x] 00.13 `docker-compose.yml`
+- [x] 00.14 Secrets strategy
+
+> Epic 00 ships **pre-completed in this scaffold.** Verify it yourself before
+> trusting it: run `make dev` and `make verify`, then read `CLAUDE.md`.
+
+### EPIC 01 — Data layer · *gate: RLS proven with 2 tenants; append-only proven*
+- [x] 01.1 Migration tooling
+- [x] 01.2 Core tables
+- [x] 01.3 Meal tables
+- [x] 01.4 Money tables
+- [x] 01.5 ★ Append-only enforcement rules
+- [x] 01.6 Institution hedges
+- [x] 01.7 ★ RLS policies — **write the two-tenant test**
+- [ ] 01.8 Indexes verified with EXPLAIN
+- [ ] 01.9 sqlc config + first queries
+- [ ] 01.10 Seed script
+
+---
+
+## Day 2 — ★ The engine. Do not delegate.
+
+### EPIC 02 — Domain engine ★ · *gate: 9 properties + vectors green, benchmark recorded*
+- [x] 02.1 Pure input/output types
+- [ ] 02.2 ★ **Nine property tests, written BEFORE implementation**
+- [ ] 02.3 ★ `Materialize`
+- [ ] 02.4 ★ `Settle`
+- [ ] 02.5 ★ Conservation invariant asserted in code
+- [ ] 02.6 ★ 30–50 golden vectors (3 seeded — 27+ to go)
+- [ ] 02.7 ★ Vector runner reusable from Dart
+- [ ] 02.8 ★ Benchmark 500 members × 31 days × 3 slots
+
+---
+
+## Day 3 — Contracts
+
+### EPIC 03 — Contracts & transport · *gate: TS + Dart clients round-trip*
+- [x] 03.1 buf workspace + breaking checks
+- [x] 03.2 Proto packages
+- [x] 03.3 ★ Common types (`Money`, `Date`, `MathExplain`)
+- [ ] 03.4 Connect handlers in one binary
+- [ ] 03.5 Codegen: Go + TS + Dart
+- [ ] 03.6 Middleware (request id, slog, recovery, CORS, timeouts)
+- [ ] 03.7 Auth interceptor
+- [ ] 03.8 ★ Tenant interceptor + RLS session var
+- [x] 03.9 Error taxonomy (`docs/eng/errors.md`)
+- [ ] 03.10 Rate limiting middleware
+- [x] 03.11 Health / readiness / version
+
+---
+
+## Days 4–14 — Build
+
+### EPIC 04 — Identity & tenancy · *gate: mess + 7 members + 7 links*
+- [ ] 04.1 Firebase token verification
+- [ ] 04.2 `CreateSession` / `GetMe`
+- [ ] 04.3 `CreateMess` atomically
+- [ ] 04.4 `AddMember` + invite token
+- [ ] 04.5 ★ Invite token entropy + revocation
+- [ ] 04.6 ★ Phone matching, no duplicates
+- [ ] 04.7 Role checks at the interceptor
+- [ ] 04.8 Soft leave
+- [ ] 04.9 ★ Account deletion policy
+
+### EPIC 05 — Meal service · *gate: 30-day scenario matches hand-computed sheet*
+- [ ] 05.1 Slots + cutoffs
+- [ ] 05.2 `SetPatterns`, all slots ON by default
+- [ ] 05.3 `CreateException`
+- [ ] 05.4 Date ranges + null slot
+- [ ] 05.5 ★ `VoidException`
+- [ ] 05.6 ★ Cutoff in Asia/Dhaka, clock-skew tested
+- [ ] 05.7 `after_cutoff` audit
+- [ ] 05.8 `GetDay`
+- [ ] 05.9 Bulk endpoint with `group_id`
+- [ ] 05.10 Day flags
+- [ ] 05.11 Integration tests
+
+### EPIC 06 — Money · *gate: conservation asserted at the API boundary*
+- [ ] 06.1 `AddLedgerEntry`
+- [ ] 06.2 Categories
+- [ ] 06.3 ★ Void
+- [ ] 06.4 ★ `GetAccounts`
+- [ ] 06.5 ★ `MathExplain` on every money field
+- [ ] 06.6 ★ Visible rounding remainder
+- [ ] 06.7 Deposit attribution
+- [ ] 06.8 Member statement
+- [ ] 06.9 Money formatting service
+
+### EPIC 07 — Periods · *gate: reopen a closed month, identical numbers*
+- [ ] 07.1 Period lifecycle
+- [ ] 07.2 `PreviewClose`
+- [ ] 07.3 ★ `ClosePeriod`
+- [ ] 07.4 ★ Immutability proven
+- [ ] 07.5 ★ Property P7
+- [ ] 07.6 ★ Rollover
+- [ ] 07.7 Close guard rails
+- [ ] 07.8 `GetStatement`
+
+### EPIC 08 — Flutter foundation · *gate: signed-in shell, 4 tabs, Bangla, real device*
+- [ ] 08.1 Project + flavors
+- [ ] 08.2 Theme from tokens
+- [ ] 08.3 ★ ARB bn + en
+- [ ] 08.4 ★ Bangla numerals + `MoneyText`
+- [ ] 08.5 Generated Dart client
+- [ ] 08.6 State + repository layer
+- [ ] 08.7 Bottom nav shell
+- [ ] 08.8 Error/loading/empty primitives
+- [ ] 08.9 Google Sign-In
+
+### EPIC 09 — Onboarding · *gate: stranger → usable Today screen in <90s*
+- [ ] 09.1 Splash + language
+- [ ] 09.2 Sign-in
+- [ ] 09.3 ★ 3-question setup — **no fourth question, ever**
+- [ ] 09.4 How-it-works card
+- [ ] 09.5 Invite link + Messenger share
+- [ ] 09.6 ★ Solo-manager path
+- [ ] 09.7 Demo mess
+- [ ] 09.8 Empty states
+
+### EPIC 10 — Daily loop ★ · *gate: tap-count audit ≤6 taps on a real device*
+- [ ] 10.1 ★ Cutoff card
+- [ ] 10.2 ★ Today layout
+- [ ] 10.3 ★ Empty-day SUCCESS state
+- [ ] 10.4 ★ Exception sheet
+- [ ] 10.5 Range picker
+- [ ] 10.6 Guest flow
+- [ ] 10.7 ★ Optimistic write + rollback
+- [ ] 10.8 Post-cutoff state
+- [ ] 10.9 Khata grid
+- [ ] 10.10 Void UX
+- [ ] 10.11 Instrument `exception_marked`
+- [ ] 10.12 ★ **Tap-count audit — this gate IS the product**
+
+### EPIC 11 — Money & accounts · *gate: zero client-side money arithmetic*
+- [ ] 11.1 `+বাজার` sheet
+- [ ] 11.2 `+জমা` sheet
+- [ ] 11.3 হিসাব screen
+- [ ] 11.4 ★ Math sheet
+- [ ] 11.5 Member statement
+- [ ] 11.6 Ledger history + void
+- [ ] 11.7 ★ Numeral toggle everywhere
+- [ ] 11.8 Instrument `number_tapped_for_math`
+
+### EPIC 12 — Month close · *gate: close, share, reopen next day unchanged*
+- [ ] 12.1 Step 1 review
+- [ ] 12.2 ★ Step 2 confirm
+- [ ] 12.3 Step 3 done
+- [ ] 12.4 Statement → image
+- [ ] 12.5 Share sheet
+- [ ] 12.6 Historical viewer
+- [ ] 12.7 Instrument
+
+### EPIC 13 — Members & settings · *gate: deletion works in-app and on web*
+- [ ] 13.1 Members list
+- [ ] 13.2 Add member
+- [ ] 13.3 Pattern editor
+- [ ] 13.4 Remove/leave
+- [ ] 13.5 Mess profile
+- [ ] 13.6 Slots & cutoffs
+- [ ] 13.7 Language + numerals
+- [ ] 13.8 ★ In-app account deletion
+- [ ] 13.9 Data export request
+- [ ] 13.10 About
+
+### EPIC 14 — Member PWA · *gate: Lighthouse CI size + speed budget*
+- [ ] 14.1 `/m/[token]` route
+- [ ] 14.2 আজ/কাল screen
+- [ ] 14.3 1-tap অফ / গেস্ট
+- [ ] 14.4 আমার হিসাব
+- [ ] 14.5 ★ <500KB, <3s on 3G
+- [ ] 14.6 A2HS on 2nd visit
+- [ ] 14.7 bn/en + numerals
+- [ ] 14.8 Token revocation
+- [ ] 14.9 Instrument `member_link_opened`
+
+### EPIC 15 — Landing · *gate: privacy page matches data safety form*
+- [ ] 15.1 ★ Home — one idea
+- [ ] 15.2 Tap comparison graphic
+- [ ] 15.3 Screenshots + Play badge
+- [ ] 15.4 ★ `/privacy`
+- [ ] 15.5 ★ `/terms`
+- [ ] 15.6 ★ `/delete-account`
+- [ ] 15.7 SEO + OG images
+
+### EPIC 16 — Admin portal · *gate: answer "what did mess X do Tuesday" in 30s*
+> **Start on Day 5.** Without Django admin this is your only window into the
+> running system for the next nine days.
+- [ ] 16.1 Auth + IP allowlist
+- [ ] 16.2 Dashboard
+- [ ] 16.3 Tenant search
+- [ ] 16.4 ★ Read-only inspector
+- [ ] 16.5 User lookup
+- [ ] 16.6 Feature flags
+- [ ] 16.7 Metrics
+- [ ] 16.8 Admin audit log
+
+### EPIC 17 — Telemetry · *gate: answer "how many exceptions yesterday"*
+- [ ] 17.1 Analytics wired
+- [ ] 17.2 ★ All 14 events verified in DebugView
+- [ ] 17.3 Crashlytics + symbols
+- [ ] 17.4 Remote Config kill switch
+- [ ] 17.5 ★ Entitlement stub
+- [ ] 17.6 ★ All gated features route through `Has()`
+- [ ] 17.7 Server-side event sink
+
+### EPIC 18 — Hardening · *gate: smoke green, restore drill done, Bangla signed off*
+- [ ] 18.1 ★ Smoke test script
+- [ ] 18.2 Load test p95 <300ms
+- [ ] 18.3 ★ Security pass
+- [ ] 18.4 Dependency + secret scanning
+- [ ] 18.5 ★ **Backup + RESTORE DRILL**
+- [ ] 18.6 ★ Bangla copy read aloud by a native speaker
+- [ ] 18.7 130% text scale, no clipping
+- [ ] 18.8 ★ Low-end device 60fps
+- [ ] 18.9 ★ Bad-network matrix
+- [ ] 18.10 ★ 3 days crash-free own use
+
+### EPIC 19 — Release · *gate: live on Play, alerts reach your phone*
+- [ ] 19.1 ★ Keystore backed up **off the dev server**
+- [ ] 19.2 Release pipeline → signed AAB
+- [ ] 19.3 ★ Listing bn-BD **and** en-US
+- [ ] 19.4 ★ Icon, feature graphic, 6 screenshots
+- [ ] 19.5 ★ Data safety form matches the build
+- [ ] 19.6 ★ Content rating, audience **18+**
+- [ ] 19.7 ★ Permissions: INTERNET only, no READ_SMS
+- [ ] 19.8 ★ Production deploy + backups
+- [ ] 19.9 ★ Rollback plan + kill switch drill
+- [ ] 19.10 ★ Post-launch alerting
+
+---
+
+## If a day slips, cut in this order
+
+1. Khata grid (10.9)
+2. Demo mess (09.7)
+3. Admin metrics (16.7)
+4. Landing polish (15.2, 15.3)
+
+**Never cut:** Epic 02 · task 10.4 · task 11.4 · Epic 14.
+Those four *are* the differentiation. Everything else is table stakes your
+competitors already ship.

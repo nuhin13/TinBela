@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS period_statements CASCADE;
+DROP TABLE IF EXISTS periods           CASCADE;
+DROP TABLE IF EXISTS ledger_entries    CASCADE;
+DROP TABLE IF EXISTS meal_exceptions   CASCADE;
+DROP TABLE IF EXISTS day_flags         CASCADE;
+DROP TABLE IF EXISTS patterns          CASCADE;
+DROP TABLE IF EXISTS slots             CASCADE;
+DROP TABLE IF EXISTS memberships       CASCADE;
+DROP TABLE IF EXISTS groups            CASCADE;
+DROP TABLE IF EXISTS users             CASCADE;
+DROP TABLE IF EXISTS tenants           CASCADE;

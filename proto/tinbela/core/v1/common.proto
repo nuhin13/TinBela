@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package tinbela.core.v1;
+
+// Money is ALWAYS integer paisa. Never a float, never a decimal string.
+// ৳12.40 is paisa = 1240.
+message Money {
+  int64 paisa = 1;
+
+  // Server-formatted for the caller's locale and numeral preference,
+  // e.g. "৳১,২৪০" or "৳1,240". Clients never format money themselves.
+  string display = 2;
+
+  // How this number was derived. Wedge 3 — trust — expressed in the
+  // contract so a client cannot quietly drop it.
+  MathExplain math = 3;
+}
+
+// MathExplain powers the tappable math sheet. Every money value in every
+// response carries one. The client RENDERS this; it never recomputes.
+message MathExplain {
+  // e.g. "মোট বাজার ÷ মোট মিল"
+  string formula = 1;
+  repeated MathTerm terms = 2;
+  // e.g. "বাকি ৳০ মেসের হিসাবে যোগ আছে"
+  string note = 3;
+}
+
+message MathTerm {
+  string label = 1;
+  string display = 2;
+}
+
+// A calendar day in the tenant timezone (Asia/Dhaka). "YYYY-MM-DD".
+// A meal belongs to a day, not an instant — never use a timestamp here.
+message Date {
+  string value = 1;
+}
+
+message DateRange {
+  Date from = 1;
+  Date to = 2;
+}

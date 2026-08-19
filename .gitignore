@@ -1,0 +1,36 @@
+# Go
+/services/api/bin/
+*.test
+coverage.out
+
+# Node
+node_modules/
+.next/
+.turbo/
+dist/
+*.tsbuildinfo
+
+# Flutter
+apps/manager/build/
+apps/manager/.dart_tool/
+apps/manager/.flutter-plugins*
+*.g.dart
+*.freezed.dart
+
+# Env & secrets
+.env
+.env.local
+*.keystore
+*.jks
+google-services.json
+service-account*.json
+
+# Generated (regenerate with `make proto` / `make sqlc` / `make tokens`)
+/packages/api-clients/gen/
+/services/api/internal/db/*.gen.go
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp

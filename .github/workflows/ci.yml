@@ -1,0 +1,59 @@
+name: ci
+
+on:
+  push: { branches: [main] }
+  pull_request:
+
+# CI runs exactly `make verify` — never a weaker subset. If it passes here
+# it passes locally, and vice versa.
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: tinbela
+          POSTGRES_PASSWORD: tinbela
+          POSTGRES_DB: tinbela
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      PG_DSN: postgres://tinbela:tinbela@localhost:5432/tinbela?sslmode=disable
+      TZ: Asia/Dhaka
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }   # buf breaking needs history
+
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.23", cache-dependency-path: services/api/go.sum }
+
+      - uses: bufbuild/buf-setup-action@v1
+
+      - name: Install tools
+        run: |
+          go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+      - name: make verify
+        run: make verify
+
+  flutter:
+    runs-on: ubuntu-latest
+    # Path-filtered so a backend change does not rebuild the app.
+    if: contains(github.event.head_commit.modified, 'apps/manager') || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - run: |
+          if [ -f apps/manager/pubspec.yaml ]; then
+            cd apps/manager
+            flutter pub get
+            flutter analyze
+            flutter test
+          else
+            echo "manager app not scaffolded yet (Epic 08)"
+          fi

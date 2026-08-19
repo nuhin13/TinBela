@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package tinbela.meals.v1;
+
+import "tinbela/core/v1/common.proto";
+
+enum ExceptionAction {
+  EXCEPTION_ACTION_UNSPECIFIED = 0;
+  EXCEPTION_ACTION_OFF = 1;
+  EXCEPTION_ACTION_ON = 2;
+  EXCEPTION_ACTION_SET_QTY = 3;
+  EXCEPTION_ACTION_GUEST = 4;  // guests ADD, they never replace
+}
+
+// The weekly default (Law 1). A normal day needs ZERO entries.
+message Pattern {
+  string membership_id = 1;
+  string slot_id = 2;
+  int32 dow_mask = 3;  // bit 0 = Saturday. 127 = every day (the default)
+  int32 qty = 4;
+}
+
+message SetPatternsRequest {
+  string mess_id = 1;
+  string membership_id = 2;
+  repeated Pattern patterns = 3;
+}
+message SetPatternsResponse { repeated Pattern patterns = 1; }
+
+// Law 2. Append-only — this never updates an existing row.
+message CreateExceptionRequest {
+  string mess_id = 1;
+  string membership_id = 2;
+  // P3 institution mode sends this to mark a whole batch at once.
+  // The v1.0 mess app never sets it.
+  string group_id = 3;
+  string slot_id = 4;  // empty = every active slot
+  tinbela.core.v1.Date date_from = 5;
+  tinbela.core.v1.Date date_to = 6;  // == date_from for a single day
+  ExceptionAction action = 7;
+  int32 qty = 8;
+}
+message CreateExceptionResponse { Exception exception = 1; }
+
+message Exception {
+  string id = 1;
+  string membership_id = 2;
+  string member_display_name = 3;
+  string slot_id = 4;
+  tinbela.core.v1.DateRange range = 5;
+  ExceptionAction action = 6;
+  int32 qty = 7;
+  string marked_by_name = 8;
+  bool after_cutoff = 9;   // Law 4 audit flag
+  string created_at = 10;
+}
+
+message VoidExceptionRequest { string mess_id = 1; string exception_id = 2; }
+message VoidExceptionResponse {}
+
+// GetDay renders the entire Today screen in one call.
+message GetDayRequest {
+  string mess_id = 1;
+  tinbela.core.v1.Date date = 2;
+}
+message GetDayResponse {
+  tinbela.core.v1.Date date = 1;
+  repeated SlotHeadcount headcounts = 2;
+  repeated MemberDay members = 3;
+  repeated Exception exceptions = 4;
+  // True when every member is on their default pattern. The client shows
+  // "বাকি সবাই ডিফল্ট প্যাটার্নে ✓ / কিছু করার নেই" — a SUCCESS state.
+  bool all_default = 5;
+}
+
+message SlotHeadcount {
+  string slot_id = 1;
+  string name_bn = 2;
+  int32 count = 3;
+  int32 guest_count = 4;
+  bool cutoff_passed = 5;
+  int32 seconds_to_cutoff = 6;
+}
+
+message MemberDay {
+  string membership_id = 1;
+  string display_name = 2;
+  map<string, int32> qty_by_slot = 3;
+}
+
+service MealsService {
+  rpc SetPatterns(SetPatternsRequest) returns (SetPatternsResponse);
+  rpc CreateException(CreateExceptionRequest) returns (CreateExceptionResponse);
+  rpc VoidException(VoidExceptionRequest) returns (VoidExceptionResponse);
+  rpc GetDay(GetDayRequest) returns (GetDayResponse);
+}

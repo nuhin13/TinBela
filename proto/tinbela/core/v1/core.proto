@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package tinbela.core.v1;
+
+import "tinbela/core/v1/common.proto";
+
+enum TenantKind {
+  TENANT_KIND_UNSPECIFIED = 0;
+  TENANT_KIND_MESS = 1;
+  TENANT_KIND_INSTITUTION = 2;  // P3
+  TENANT_KIND_HOME = 3;         // P4
+}
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_MANAGER = 1;
+  ROLE_MEMBER = 2;
+  ROLE_ACCOUNTANT = 3;  // P3
+  ROLE_WARDEN = 4;      // P3
+  ROLE_GUARDIAN = 5;    // P3
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string phone_e164 = 3;
+  string locale = 4;
+  bool use_bangla_numerals = 5;
+}
+
+message Mess {
+  string id = 1;
+  string name = 2;
+  TenantKind kind = 3;
+  repeated Slot slots = 4;
+  string current_period_id = 5;
+}
+
+message Slot {
+  string id = 1;
+  string name_bn = 2;
+  string name_en = 3;
+  int32 sort_order = 4;
+  string cutoff_local = 5;  // "07:00"
+  bool active = 6;
+}
+
+message Member {
+  string id = 1;
+  string display_name = 2;
+  string phone_e164 = 3;
+  Role role = 4;
+  Date joined_at = 5;
+  Date left_at = 6;
+  InviteState invite_state = 7;
+}
+
+enum InviteState {
+  INVITE_STATE_UNSPECIFIED = 0;
+  INVITE_STATE_SENT = 1;    // পাঠানো
+  INVITE_STATE_OPENED = 2;  // খুলেছেন
+  INVITE_STATE_LINKED = 3;  // যুক্ত
+}
+
+message GetMeRequest {}
+message GetMeResponse {
+  User user = 1;
+  repeated Mess messes = 2;
+}
+
+message CreateMessRequest {
+  string name = 1;
+  TenantKind kind = 2;
+  int32 slot_count = 3;  // the third and final onboarding question
+}
+message CreateMessResponse {
+  Mess mess = 1;
+  string invite_link = 2;
+}
+
+message AddMemberRequest {
+  string mess_id = 1;
+  string display_name = 2;
+  string phone_e164 = 3;  // optional
+}
+message AddMemberResponse {
+  Member member = 1;
+  string invite_link = 2;
+}
+
+message ListMembersRequest { string mess_id = 1; }
+message ListMembersResponse { repeated Member members = 1; }
+
+service CoreService {
+  rpc GetMe(GetMeRequest) returns (GetMeResponse);
+  rpc CreateMess(CreateMessRequest) returns (CreateMessResponse);
+  rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+}

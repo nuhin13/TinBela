@@ -1,0 +1,21 @@
+version: v2
+inputs:
+  - directory: proto
+plugins:
+  # Go server (Connect) — serves gRPC, gRPC-Web and HTTP/JSON (ADR-0002)
+  - remote: buf.build/protocolbuffers/go
+    out: services/api/internal/gen
+    opt: paths=source_relative
+  - remote: buf.build/connectrpc/go
+    out: services/api/internal/gen
+    opt: paths=source_relative
+
+  # TypeScript client for apps/web and apps/admin
+  - remote: buf.build/bufbuild/es
+    out: packages/api-clients/gen
+    opt: target=ts
+
+  # Dart MESSAGE types only. Flutter calls Connect's JSON codec over plain
+  # HTTP — no Connect Dart client dependency (ADR-0003).
+  - remote: buf.build/protocolbuffers/dart
+    out: apps/manager/lib/core/api/gen

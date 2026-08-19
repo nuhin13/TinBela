@@ -1,0 +1,5 @@
+# Dev. Production config lives on the dev server, not in the repo.
+:80 {
+	encode gzip zstd
+	reverse_proxy api:8080
+}
