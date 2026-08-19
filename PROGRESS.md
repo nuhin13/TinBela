@@ -27,6 +27,11 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 
 > Epic 00 ships **pre-completed in this scaffold.** Verify it yourself before
 > trusting it: run `make dev` and `make verify`, then read `CLAUDE.md`.
+>
+> **Verified 2026-08-19 — the gate did NOT pass.** Eight defects fixed on
+> `fix/epic-00-gate`; see that branch's commits. `make verify` now runs every
+> gate but still fails one: hardcoded Bangla strings in `apps/manager/lib/app.dart`
+> await ARB wiring (task 08.3). **Epic 00 is not done until that is green.**
 
 ### EPIC 01 — Data layer · *gate: RLS proven with 2 tenants; append-only proven*
 - [x] 01.1 Migration tooling
@@ -36,9 +41,12 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [x] 01.5 ★ Append-only enforcement rules
 - [x] 01.6 Institution hedges
 - [x] 01.7 ★ RLS policies — **write the two-tenant test**
-- [ ] 01.8 Indexes verified with EXPLAIN
+      ⚠ policies exist but never evaluate: RLS is not FORCEd and the API
+      connects as the table owner. Measured 2026-08-19 — one tenant's
+      session read all 500 tenants' rows. See `docs/eng/indexes.md`.
+- [x] 01.8 Indexes verified with EXPLAIN — evidence in `docs/eng/indexes.md`
 - [ ] 01.9 sqlc config + first queries
-- [ ] 01.10 Seed script
+- [x] 01.10 Seed script
 
 ---
 

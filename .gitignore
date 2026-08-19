@@ -1,5 +1,8 @@
 # Go
 /services/api/bin/
+/seed
+/smoke
+go.work.sum
 *.test
 coverage.out
 
