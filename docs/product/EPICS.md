@@ -292,8 +292,8 @@ in the engine.
 
 | ID | Task | Done when | Owner |
 |---|---|---|---|
-| 09.1 | Splash + language picker (bn default, en one tap) | Persisted | `flutter` |
-| 09.2 | Sign-in screen per prototype | 1 tap | `flutter` |
+| 09.1 | Splash + language picker (bn default, en one tap) | Persisted. NB: the prototype has no separate picker screen — bn/en is a line on welcome, and the real switch lives in আরও → ভাষা/সংখ্যা | `flutter` |
+| 09.2 | **Google Sign-In** (Firebase). NOT the prototype's phone+OTP — see ADR-0009 | 1 tap, no SMS gateway, no `READ_SMS` in the manifest | `flutter` |
 | 09.3 | 3-question mess setup: name · kind · slots | No fourth question. Ever. | ★ |
 | 09.4 | "তিনবেলা যেভাবে কাজ করে" explainer card (pattern → exception → done) | 3 lines, skippable | `flutter` |
 | 09.5 | Mess created → invite link screen, copy + Messenger share | Share sheet opens Messenger first | `flutter` |
@@ -397,7 +397,7 @@ unchanged.
 
 | ID | Task | Done when | Owner |
 |---|---|---|---|
-| 14.1 | Next.js route `/m/[token]`, token auth, no session | Works in a fresh incognito window | `web` |
+| 14.1 | Next.js route `/m/[token]`, token auth, no session. **2 tabs only** — the prototype's গ্রুপ tab is P2 | Works in a fresh incognito window | `web` |
 | 14.2 | আজ/কাল screen: my slots, cutoff countdown | Renders from one API call | `web` |
 | 14.3 | 1-tap অফ and গেস্ট | Optimistic with rollback | `web` |
 | 14.4 | আমার হিসাব: meals, deposits, balance, math sheets | Read-only | `web` |

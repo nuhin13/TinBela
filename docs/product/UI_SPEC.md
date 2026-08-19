@@ -89,6 +89,7 @@
 
 ```
  ADMIN PORTAL (Next.js, internal, staff role)
+
  sidebar
  ├─ Dashboard        active messes · exceptions today · closes this month
  ├─ Tenants          search → detail: members · ledger · exceptions
@@ -97,6 +98,26 @@
  ├─ Flags            feature flags · kill switch
  └─ Metrics          BRD §10 events
 ```
+
+### 2.1 Where this map deliberately differs from the prototype
+
+`apps/manager/AGENTS.md` says the prototype wins when it disagrees with this
+spec. **These three are the exception** — they are settled decisions made after
+the design was drawn, not spec drift. Do not "correct" them back.
+
+| The prototype shows | This spec says | Authority |
+|---|---|---|
+| Phone → 4-digit OTP sign-in | Google Sign-In, one tap | ADR-0009 |
+| 5 manager tabs: হোম · মিল · হিসাব · সদস্য · আরও | 4 tabs: আজ · খাতা · হিসাব · আরও | this §2 |
+| 3 PWA tabs incl. গ্রুপ | 2 tabs | SCREENS.md M6 (P2) |
+
+Tab-label wording is load-bearing, not decoration. **আজ** names the manager's
+daily job — the entire thesis of §3.1 — where "হোম" is a generic container.
+**খাতা** is the word that earns the notebook association from managers
+currently keeping paper accounts, which is the R2 risk mitigation; "মিল"
+throws that away for nothing.
+
+Any *fourth* conflict is a real inconsistency: raise it, do not resolve it.
 
 ---
 

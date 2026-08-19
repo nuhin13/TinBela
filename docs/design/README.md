@@ -6,7 +6,7 @@ an agent will not find it.
 ```
 docs/design/
   README.md          ← you are here: the map
-  prototype.html     ← ★ THE APPROVED PROTOTYPE. Drop your file here.
+  prototype.html     ← ★ THE APPROVED PROTOTYPE. Committed, 1.4 MB.
   SCREENS.md         ← traceability: every prototype screen → v1.0 or a phase
   screens/           ← optional PNG exports, one per screen
 docs/product/
@@ -30,6 +30,45 @@ packages/design-tokens/
 only as prose in `UI_SPEC.md` — which is a paraphrase. When an agent builds
 the exception sheet and the spec is ambiguous about spacing or state, it
 should open the real thing, not guess from a description.
+
+---
+
+## How to read `prototype.html`
+
+It is a **single scrolling canvas**, not a paged deck — there is no next/back.
+It is self-contained: React, ReactDOM and Babel are bundled inside, so it opens
+offline with no CDN. Just open the file in a browser.
+
+The frames are **not laid out in reading order.** They run:
+
+| Order on canvas | Frame | What it is |
+|---|---|---|
+| 1st | **3 / 3a / 3b** | Onboarding — manager sign-up, then member first-open |
+| 2nd | **2 / 2a / 2b** | ★ The clickable prototype. Manager app + member PWA, side by side. Use the scenario picker at the top — both phones change together |
+| 3rd | **1a / 1b / 1c** | Tokens, component set, and a static Manager Home reference |
+
+**Start at frame 2.** It is the only interactive part and the only one that
+shows real state transitions. 1a–1c are reference plates; 3 is a linear walk.
+
+Frame 2's scenario picker drives both phones from one state object: `normal`
+(zero exceptions — the finished-not-empty case), `exception`, `cutoff`,
+`daypass`, `firstrun`. **Check every screen against `normal` before you build
+it.** A screen that only looks right with exceptions present is the most common
+way to get the daily loop wrong.
+
+---
+
+## Where the prototype is deliberately not the truth
+
+Two conflicts are settled and must not be "fixed" in code to match the drawing:
+
+- **Sign-in is phone+OTP in the prototype. It is Google Sign-In in v1.0** —
+  ADR-0009. The OTP keypad, the 11-digit phone step and the resend timer are
+  dead design.
+- **The manager nav has 5 tabs in the prototype. It ships with 4** — UI_SPEC §2.
+- The member PWA has 3 tabs in the prototype. It ships with 2 (গ্রুপ is P2).
+
+Everything else: the prototype wins.
 
 ---
 

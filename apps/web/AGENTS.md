@@ -19,6 +19,15 @@ link is a free acquisition impression — and a member who waits eight seconds
 never opens it again, which kills the growth loop. Treat a budget regression
 as a broken build, not a nice-to-have.
 
+## Before touching the member PWA
+
+Open `docs/design/prototype.html` — frame **2b** is the member surface.
+
+**It shows three tabs: আজ · আমার হিসাব · গ্রুপ. Build two.** গ্রুপ is P2
+(`docs/design/SCREENS.md` M3). It is the single largest thing you could add to
+a 500KB budget, and it is the first thing to reach for once the budget has
+headroom — but not in v1.0.
+
 ## Rules
 
 - **No `localStorage`, no `sessionStorage`, no browser storage of any kind.**

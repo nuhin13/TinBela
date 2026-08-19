@@ -92,6 +92,8 @@ Next task:          id only
 | Why it is built this way | `docs/adr/README.md` |
 | Product rules & scope | `docs/product/BRD.md` §6, §7.1 |
 | Screens & navigation | `docs/product/UI_SPEC.md` |
+| The approved design itself | `docs/design/prototype.html` — open in a browser |
+| Is this screen even in v1.0 | `docs/design/SCREENS.md` |
 | Schema & engine contract | `docs/product/BUILD_SPEC.md` |
 | Code style | `docs/eng/conventions.md` |
 | Error mapping | `docs/eng/errors.md` |
@@ -104,6 +106,8 @@ Nested briefs: `services/api/AGENTS.md` · `apps/manager/AGENTS.md` ·
 ## Stop and ask when
 
 - The task implies a feature outside BRD §7.1.
+- The prototype shows something an accepted ADR contradicts. The ADR wins on
+  architecture and auth; the prototype wins on layout and interaction.
 - A proto change would fail `buf breaking`.
 - An append-only table needs altering.
 - The task's Owner is ★.
