@@ -39,7 +39,7 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [x] 01.3 Meal tables
 - [x] 01.4 Money tables
 - [x] 01.5 ★ Append-only enforcement rules
-      Proven by `services/api/internal/db/append_only_test.go`: UPDATE and
+      Proven by `services/api/internal/dbtest/append_only_test.go`: UPDATE and
       DELETE on all three protected tables report 0 rows and change nothing,
       and the `void_of` correction path works.
 - [x] 01.6 Institution hedges
@@ -47,7 +47,7 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
       Fixed 2026-08-19: the API connected as a SUPERUSER, so RLS never
       applied. Migration 000003 adds a non-owner `tinbela_app` role;
       000002 forces RLS as defence in depth. Test:
-      `services/api/internal/db/rls_test.go`.
+      `services/api/internal/dbtest/rls_test.go`.
 - [x] 01.8 Indexes verified with EXPLAIN — evidence in `docs/eng/indexes.md`
 - [x] 01.9 sqlc config + first queries — 15 queries across 4 files, all
       tenant-filtered; generated code committed (CI has no sqlc); hand-edit

@@ -76,7 +76,7 @@ non-superuser role that the API connects as; `000002` forces RLS as
 defence in depth. Measured afterwards: an unscoped session reads 0 rows,
 a scoped session reads only its own tenant's.
 
-Proven by `services/api/internal/db/rls_test.go`, which builds and drops
+Proven by `services/api/internal/dbtest/rls_test.go`, which builds and drops
 its own database -- the demo database cannot be cleaned up, because the
 append-only rules break `ON DELETE CASCADE` (see below).
 
