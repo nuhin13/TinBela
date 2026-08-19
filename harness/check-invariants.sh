@@ -19,9 +19,12 @@ HITS=$(grep -rn --include='*.go' -E '\bfloat(32|64)\b' \
                || green "no float in money paths"
 
 # 2. No UPDATE/DELETE on append-only tables (Invariant 2)
+# A test that PROVES these writes are refused must contain them. Such a
+# line must say so explicitly -- a bare UPDATE in a test still trips this.
 HITS=$(grep -rn --include='*.go' --include='*.sql' -iE \
         '(UPDATE|DELETE)[[:space:]]+(FROM[[:space:]]+)?(ledger_entries|meal_exceptions|period_statements)' \
-        services/api/queries services/api/internal 2>/dev/null || true)
+        services/api/queries services/api/internal 2>/dev/null \
+        | grep -v '// ignore: append-only-test' || true)
 [ -n "$HITS" ] && { red "UPDATE/DELETE on an append-only table (Invariant 2)"; echo "$HITS" | head -5; } \
                || green "append-only respected"
 

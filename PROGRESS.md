@@ -39,6 +39,9 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [x] 01.3 Meal tables
 - [x] 01.4 Money tables
 - [x] 01.5 ★ Append-only enforcement rules
+      Proven by `services/api/internal/db/append_only_test.go`: UPDATE and
+      DELETE on all three protected tables report 0 rows and change nothing,
+      and the `void_of` correction path works.
 - [x] 01.6 Institution hedges
 - [x] 01.7 ★ RLS policies — **write the two-tenant test**
       Fixed 2026-08-19: the API connected as a SUPERUSER, so RLS never
