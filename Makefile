@@ -72,7 +72,13 @@ golden: ## Shared vectors — Go now, Dart in P6
 	cd $(API_DIR) && go test ./internal/... -run 'Golden' -count=1
 
 contract: ## Proto compatibility + generated-client round trip
-	buf breaking proto --against '.git#branch=master,subdir=proto' || echo "  (no master branch yet — skipping)"
+	@# `|| echo` here would mask a real breaking change as a skip. Skip only
+	@# when the baseline genuinely does not exist.
+	@if git rev-parse --verify --quiet master >/dev/null; then \
+		buf breaking proto --against '.git#branch=master,subdir=proto'; \
+	else \
+		echo "  (no master branch — skipping breaking check)"; \
+	fi
 	cd $(API_DIR) && go test ./internal/transport -run 'Contract' -count=1
 
 invariants: ## Grep-level guards that types cannot express

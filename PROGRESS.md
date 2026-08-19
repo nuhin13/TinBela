@@ -74,8 +74,9 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 
 ### EPIC 03 — Contracts & transport · *gate: TS + Dart clients round-trip*
 > **Gate NOT met.** Go client round-trips (`make contract`). TypeScript has no
-> test runner; Dart is blocked on Flutter being uninstallable. See
-> `docs/eng/transport.md`.
+> test runner; Dart is blocked on Flutter being uninstallable. `buf breaking`
+> also fails once against master on the new `go_package` options — expected,
+> and it goes quiet on merge. See `docs/eng/transport.md`.
 - [x] 03.1 buf workspace + breaking checks
 - [x] 03.2 Proto packages
 - [x] 03.3 ★ Common types (`Money`, `Date`, `MathExplain`)

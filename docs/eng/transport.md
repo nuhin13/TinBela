@@ -111,3 +111,29 @@ a fresh process has not reproduced it (36/24 split, zero internal errors).
 No root cause established. The plausible candidates are a leaked transaction
 or a stale process from the test loop. Worth watching under Epic 18's load
 work rather than assuming it was a one-off.
+
+## Known: `buf breaking` fails against master until this lands
+
+`make contract` currently reports:
+
+```
+File option "go_package" changed from "" to "...;corev1"   (x5)
+```
+
+This is real and expected exactly once. buf's `FILE` category includes
+`FILE_SAME_GO_PACKAGE`, so setting an option that was previously absent
+counts as a change. It breaks no shipped client: without `go_package`,
+`make proto` failed outright, so no Go client could ever have been
+generated. Once these protos are on `master`, the baseline contains the
+option and the check goes quiet.
+
+**No buf exclusion was added to silence it.** `proto/AGENTS.md` says a
+`buf breaking` failure means you would break a shipped client; an ignore
+rule here would make that sentence untrue for every future change to these
+files.
+
+Note also that `make contract` previously ended in
+`|| echo "(no main branch yet — skipping)"`, which reported *every* buf
+failure — including genuine breaking changes — as a skip. It now skips only
+when the baseline branch does not exist, and fails otherwise. These
+`go_package` findings are the first output that gate has ever produced.
