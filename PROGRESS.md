@@ -27,6 +27,11 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 
 > Epic 00 ships **pre-completed in this scaffold.** Verify it yourself before
 > trusting it: run `make dev` and `make verify`, then read `CLAUDE.md`.
+>
+> **Verified 2026-08-19 — the gate did NOT pass.** Eight defects fixed on
+> `fix/epic-00-gate`; see that branch's commits. `make verify` now runs every
+> gate but still fails one: hardcoded Bangla strings in `apps/manager/lib/app.dart`
+> await ARB wiring (task 08.3). **Epic 00 is not done until that is green.**
 
 ### EPIC 01 — Data layer · *gate: RLS proven with 2 tenants; append-only proven*
 - [x] 01.1 Migration tooling
@@ -34,11 +39,20 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [x] 01.3 Meal tables
 - [x] 01.4 Money tables
 - [x] 01.5 ★ Append-only enforcement rules
+      Proven by `services/api/internal/dbtest/append_only_test.go`: UPDATE and
+      DELETE on all three protected tables report 0 rows and change nothing,
+      and the `void_of` correction path works.
 - [x] 01.6 Institution hedges
 - [x] 01.7 ★ RLS policies — **write the two-tenant test**
-- [ ] 01.8 Indexes verified with EXPLAIN
-- [ ] 01.9 sqlc config + first queries
-- [ ] 01.10 Seed script
+      Fixed 2026-08-19: the API connected as a SUPERUSER, so RLS never
+      applied. Migration 000003 adds a non-owner `tinbela_app` role;
+      000002 forces RLS as defence in depth. Test:
+      `services/api/internal/dbtest/rls_test.go`.
+- [x] 01.8 Indexes verified with EXPLAIN — evidence in `docs/eng/indexes.md`
+- [x] 01.9 sqlc config + first queries — 15 queries across 4 files, all
+      tenant-filtered; generated code committed (CI has no sqlc); hand-edit
+      blocked by `pre-edit-guard.sh`, verified
+- [x] 01.10 Seed script
 
 ---
 
@@ -59,16 +73,20 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 ## Day 3 — Contracts
 
 ### EPIC 03 — Contracts & transport · *gate: TS + Dart clients round-trip*
+> **Gate NOT met.** Go client round-trips (`make contract`). TypeScript has no
+> test runner; Dart is blocked on Flutter being uninstallable. `buf breaking`
+> also fails once against master on the new `go_package` options — expected,
+> and it goes quiet on merge. See `docs/eng/transport.md`.
 - [x] 03.1 buf workspace + breaking checks
 - [x] 03.2 Proto packages
 - [x] 03.3 ★ Common types (`Money`, `Date`, `MathExplain`)
-- [ ] 03.4 Connect handlers in one binary
-- [ ] 03.5 Codegen: Go + TS + Dart
-- [ ] 03.6 Middleware (request id, slog, recovery, CORS, timeouts)
-- [ ] 03.7 Auth interceptor
-- [ ] 03.8 ★ Tenant interceptor + RLS session var
+- [x] 03.4 Connect handlers in one binary — 4 services, 20 RPCs; business logic stubbed to its owning epic
+- [x] 03.5 Codegen: Go + TS + Dart — needed `option go_package` in all 5 protos
+- [x] 03.6 Middleware (request id, slog, recovery, CORS, timeouts)
+- [x] 03.7 Auth interceptor — TokenVerifier seam; dev verifier refuses to build outside APP_ENV=dev. Firebase impl is 04.1
+- [x] 03.8 ★ Tenant interceptor + RLS session var — authorisation IS the RLS check, not an `if`
 - [x] 03.9 Error taxonomy (`docs/eng/errors.md`)
-- [ ] 03.10 Rate limiting middleware
+- [x] 03.10 Rate limiting middleware — measured 36 allowed / 24 throttled on a 60-call burst
 - [x] 03.11 Health / readiness / version
 
 ---

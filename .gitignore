@@ -1,5 +1,8 @@
 # Go
 /services/api/bin/
+/seed
+/smoke
+go.work.sum
 *.test
 coverage.out
 
@@ -25,9 +28,21 @@ apps/manager/.flutter-plugins*
 google-services.json
 service-account*.json
 
-# Generated (regenerate with `make proto` / `make sqlc` / `make tokens`)
-/packages/api-clients/gen/
-/services/api/internal/db/*.gen.go
+# Generated code IS committed. No CI job runs `make proto`, `make sqlc` or
+# `make tokens` -- CI goes straight to `make verify` -- so the tree has to
+# compile exactly as checked out. That covers:
+#   services/api/internal/db     (sqlc)
+#   services/api/internal/gen    (buf -> Go)
+#   packages/api-clients/gen     (buf -> TypeScript)
+#   apps/manager/lib/core/api/gen(buf -> Dart)
+# Never hand-edit any of it -- .claude/hooks/pre-edit-guard.sh blocks the
+# paths it knows about, and regeneration would discard the edit regardless.
+#
+# EXCEPTION, and it is a live problem: *.g.dart below is still ignored, so
+# `make tokens` output never lands in git. apps/manager/lib/app.dart imports
+# core/theme/tokens.g.dart, which therefore does not exist in a fresh clone
+# and the app cannot compile. Epic 08 has to resolve this -- either commit
+# tokens.g.dart or make the Flutter CI job run `make tokens` first.
 
 # OS / editors
 .DS_Store

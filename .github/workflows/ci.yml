@@ -1,7 +1,9 @@
 name: ci
 
+# This repo's default branch is master. The trigger said [main], so no
+# push has ever started this workflow -- only pull_request could.
 on:
-  push: { branches: [main] }
+  push: { branches: [master] }
   pull_request:
 
 # CI runs exactly `make verify` — never a weaker subset. If it passes here
@@ -34,7 +36,9 @@ jobs:
 
       - name: Install tools
         run: |
-          go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+          # -tags postgres, or the binary has no database drivers and
+          # every migrate call fails with "unknown driver postgres".
+          go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@latest
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
       - name: make verify

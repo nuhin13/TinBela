@@ -9,5 +9,9 @@ sqlc      = "latest"
 "go:github.com/golangci/golangci-lint/cmd/golangci-lint" = "latest"
 
 [env]
+# golang-migrate selects its database drivers with build tags. A plain
+# `go install` yields a binary that fails with "unknown driver postgres",
+# and mise's go: backend has no per-tool build-tag option -- so set it here.
+GOFLAGS = "-tags=postgres"
 PG_DSN = "postgres://tinbela:tinbela@localhost:5432/tinbela?sslmode=disable"
 TZ     = "Asia/Dhaka"

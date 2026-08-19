@@ -2,6 +2,10 @@ syntax = "proto3";
 
 package tinbela.core.v1;
 
+// Generated Go lands in services/api/internal/gen (buf.gen.yaml,
+// paths=source_relative). The package name is what handlers import.
+option go_package = "github.com/droidbuilder/tinbela/services/api/internal/gen/tinbela/core/v1;corev1";
+
 import "tinbela/core/v1/common.proto";
 
 enum TenantKind {
