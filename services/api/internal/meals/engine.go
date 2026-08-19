@@ -6,9 +6,8 @@
 //
 // PURITY: this file imports nothing from db, context, or time.Now. It is a
 // pure function of its inputs. That is what makes it
-//
-//	(a) testable with property tests,
-//	(b) portable to Dart for P6 offline sync.
+//   (a) testable with property tests,
+//   (b) portable to Dart for P6 offline sync.
 package meals
 
 import (
