@@ -68,6 +68,34 @@ does not own the tables. `docker-compose.yml` connects the API as
 `tinbela`, which owns everything, so the policies in `000001_init.up.sql`
 never evaluate.
 
-This is task 01.7 (★) and Epic 01's gate -- "cross-tenant read returns zero
-rows in a test". Left for the founder; the two-tenant test would have
-caught it.
+**Fixed 2026-08-19.** The root cause was worse than ownership: `tinbela` is
+created by `POSTGRES_USER` and is a SUPERUSER with BYPASSRLS, and
+superusers ignore RLS unconditionally -- so no table-level setting could
+close it. Migration `000003` adds `tinbela_app`, a non-owner,
+non-superuser role that the API connects as; `000002` forces RLS as
+defence in depth. Measured afterwards: an unscoped session reads 0 rows,
+a scoped session reads only its own tenant's.
+
+Proven by `services/api/internal/db/rls_test.go`, which builds and drops
+its own database -- the demo database cannot be cleaned up, because the
+append-only rules break `ON DELETE CASCADE` (see below).
+
+## Also found: ON DELETE CASCADE does not work on tenants
+
+`tenants` is referenced with `ON DELETE CASCADE` by nine tables, but a
+tenant carrying any `meal_exceptions` or `ledger_entries` row cannot be
+deleted at all:
+
+```
+ERROR:  referential integrity query on "tenants" from constraint
+        "meal_exceptions_tenant_id_fkey" on "meal_exceptions"
+        gave unexpected result
+HINT:  This is most likely due to a rule having rewritten the query.
+```
+
+The `DO INSTEAD NOTHING` rules rewrite the delete the RI trigger issues, so
+the cascade cannot complete. For a mess this is arguably correct -- ledgers
+should never vanish -- but the `ON DELETE CASCADE` clauses now describe
+behaviour the database will not perform, and anything that needs to remove
+a tenant (tests, GDPR-style erasure, `docs/eng/data-retention.md`) needs a
+different mechanism. Worth an explicit decision.

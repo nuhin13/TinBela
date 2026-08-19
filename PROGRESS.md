@@ -41,9 +41,10 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [x] 01.5 ★ Append-only enforcement rules
 - [x] 01.6 Institution hedges
 - [x] 01.7 ★ RLS policies — **write the two-tenant test**
-      ⚠ policies exist but never evaluate: RLS is not FORCEd and the API
-      connects as the table owner. Measured 2026-08-19 — one tenant's
-      session read all 500 tenants' rows. See `docs/eng/indexes.md`.
+      Fixed 2026-08-19: the API connected as a SUPERUSER, so RLS never
+      applied. Migration 000003 adds a non-owner `tinbela_app` role;
+      000002 forces RLS as defence in depth. Test:
+      `services/api/internal/db/rls_test.go`.
 - [x] 01.8 Indexes verified with EXPLAIN — evidence in `docs/eng/indexes.md`
 - [ ] 01.9 sqlc config + first queries
 - [x] 01.10 Seed script
