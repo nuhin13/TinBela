@@ -8,6 +8,10 @@ case "$INPUT" in *'"stop_hook_active":true'*) exit 0 ;; esac
 
 if [ ! -f Makefile ]; then exit 0; fi
 
+# Hooks run non-interactively, so `mise activate` from a shell profile has
+# not run. Put the pinned toolchain on PATH ourselves.
+[ -d "$HOME/.local/share/mise/shims" ] && PATH="$HOME/.local/share/mise/shims:$PATH" && export PATH
+
 echo "── running make verify ──"
 if make verify >/tmp/tinbela-verify.log 2>&1; then
   echo "✓ verify green"
