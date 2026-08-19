@@ -7,7 +7,14 @@ DSN="${PG_DSN:-postgres://tinbela:tinbela@localhost:5432/tinbela?sslmode=disable
 DIR="services/api/migrations"
 
 command -v migrate >/dev/null || { echo "  (migrate not installed — skipping)"; exit 0; }
-pg_isready -q 2>/dev/null || { echo "  (postgres not running — skipping)"; exit 0; }
+# pg_isready lives in the postgres client, which is not installed on every
+# dev box. Fall back to a TCP probe so a running server is never missed.
+pg_reachable() {
+  if command -v pg_isready >/dev/null; then pg_isready -q 2>/dev/null; return; fi
+  local hostport=${DSN#*@}; hostport=${hostport%%/*}
+  (exec 3<>"/dev/tcp/${hostport%%:*}/${hostport##*:}") 2>/dev/null
+}
+pg_reachable || { echo "  (postgres not running — skipping)"; exit 0; }
 
 echo "── migrate round trip ──"
 migrate -path "$DIR" -database "$DSN" up
