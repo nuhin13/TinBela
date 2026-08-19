@@ -8,3 +8,5 @@ require (
 	github.com/jackc/pgx/v5 v5.6.0
 	pgregory.net/rapid v1.1.0
 )
+
+require google.golang.org/protobuf v1.36.12 // indirect

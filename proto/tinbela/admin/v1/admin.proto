@@ -2,6 +2,10 @@ syntax = "proto3";
 
 package tinbela.admin.v1;
 
+// Generated Go lands in services/api/internal/gen (buf.gen.yaml,
+// paths=source_relative). The package name is what handlers import.
+option go_package = "github.com/droidbuilder/tinbela/services/api/internal/gen/tinbela/admin/v1;adminv1";
+
 // READ-ONLY on customer data. The admin portal is a window, not a lever.
 // The only writes in this service are feature flags.
 service AdminService {
