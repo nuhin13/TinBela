@@ -1,5 +1,8 @@
-// Package dbtest proves the database enforces what the application
-// assumes.
+// Package dbtest builds throwaway migrated databases for tests, and holds
+// the tests that prove the database enforces what the application assumes.
+//
+// It is a test helper that happens not to live in a _test.go file, so that
+// other packages' tests can import it. Nothing in the binary imports it.
 //
 // These tests live outside internal/db on purpose: that directory is
 // sqlc-generated, and hand-written files there are blocked by
@@ -18,23 +21,23 @@ import (
 )
 
 const (
-	ownerDSNDefault = "postgres://tinbela:tinbela@localhost:5432/tinbela?sslmode=disable"
-	appUser         = "tinbela_app"
-	appPassword     = "tinbela_app" // dev only; see migration 000003
+	OwnerDSNDefault = "postgres://tinbela:tinbela@localhost:5432/tinbela?sslmode=disable"
+	AppUser         = "tinbela_app"
+	AppPassword     = "tinbela_app" // dev only; see migration 000003
 )
 
 // ownerDSN is the migrating role's DSN: the owner, which is also a superuser
-// in dev. Tests that need to prove RLS must connect as appUser instead.
-func ownerDSN() string {
+// in dev. Tests that need to prove RLS must connect as AppUser instead.
+func OwnerDSN() string {
 	if dsn := os.Getenv("PG_DSN"); dsn != "" {
 		return dsn
 	}
-	return ownerDSNDefault
+	return OwnerDSNDefault
 }
 
 // dsnFor rewrites a DSN to point at another database, optionally as another
 // role.
-func dsnFor(t *testing.T, base, dbName, user, pass string) string {
+func DSNFor(t *testing.T, base, dbName, user, pass string) string {
 	t.Helper()
 	u, err := url.Parse(base)
 	if err != nil {
@@ -49,7 +52,7 @@ func dsnFor(t *testing.T, base, dbName, user, pass string) string {
 
 // connectSimple uses the simple protocol so multi-statement migration files
 // can be executed in one round trip.
-func connectSimple(ctx context.Context, dsn string) (*pgx.Conn, error) {
+func ConnectSimple(ctx context.Context, dsn string) (*pgx.Conn, error) {
 	cfg, err := pgx.ParseConfig(dsn)
 	if err != nil {
 		return nil, err
@@ -65,10 +68,10 @@ func connectSimple(ctx context.Context, dsn string) (*pgx.Conn, error) {
 // dev one cannot be cleaned up: the append-only DO INSTEAD NOTHING rules break
 // ON DELETE CASCADE, so a tenant holding ledger rows can never be removed.
 // See docs/eng/indexes.md.
-func newTestDatabase(ctx context.Context, t *testing.T, name string) (*pgx.Conn, string) {
+func NewTestDatabase(ctx context.Context, t *testing.T, name string) (*pgx.Conn, string) {
 	t.Helper()
 
-	admin, err := connectSimple(ctx, dsnFor(t, ownerDSN(), "postgres", "", ""))
+	admin, err := ConnectSimple(ctx, DSNFor(t, OwnerDSN(), "postgres", "", ""))
 	if err != nil {
 		t.Skipf("postgres unavailable, skipping: %v", err)
 	}
@@ -80,11 +83,11 @@ func newTestDatabase(ctx context.Context, t *testing.T, name string) (*pgx.Conn,
 		t.Fatalf("create %s: %v", name, err)
 	}
 
-	owner, err := connectSimple(ctx, dsnFor(t, ownerDSN(), name, "", ""))
+	owner, err := ConnectSimple(ctx, DSNFor(t, OwnerDSN(), name, "", ""))
 	if err != nil {
 		t.Fatalf("connect to %s: %v", name, err)
 	}
-	applyMigrations(ctx, t, owner)
+	ApplyMigrations(ctx, t, owner)
 
 	t.Cleanup(func() {
 		ctx := context.WithoutCancel(ctx)
@@ -95,10 +98,10 @@ func newTestDatabase(ctx context.Context, t *testing.T, name string) (*pgx.Conn,
 		_ = admin.Close(ctx)
 	})
 
-	return owner, dsnFor(t, ownerDSN(), name, appUser, appPassword)
+	return owner, DSNFor(t, OwnerDSN(), name, AppUser, AppPassword)
 }
 
-func applyMigrations(ctx context.Context, t *testing.T, conn *pgx.Conn) {
+func ApplyMigrations(ctx context.Context, t *testing.T, conn *pgx.Conn) {
 	t.Helper()
 	files, err := filepath.Glob(filepath.Join("..", "..", "migrations", "*.up.sql"))
 	if err != nil || len(files) == 0 {

@@ -26,12 +26,12 @@ func TestRLSTenantIsolation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	owner, appDSN := newTestDatabase(ctx, t, "tinbela_rls_test")
+	owner, appDSN := NewTestDatabase(ctx, t, "tinbela_rls_test")
 	seedTwoTenants(ctx, t, owner)
 
-	app, err := connectSimple(ctx, appDSN)
+	app, err := ConnectSimple(ctx, appDSN)
 	if err != nil {
-		t.Fatalf("connect as %s: %v", appUser, err)
+		t.Fatalf("connect as %s: %v", AppUser, err)
 	}
 	defer app.Close(ctx)
 
@@ -46,7 +46,7 @@ func TestRLSTenantIsolation(t *testing.T) {
 	}
 	if super || bypass {
 		t.Fatalf("%s has rolsuper=%v rolbypassrls=%v; RLS cannot apply to it",
-			appUser, super, bypass)
+			AppUser, super, bypass)
 	}
 
 	t.Run("unscoped session reads nothing", func(t *testing.T) {

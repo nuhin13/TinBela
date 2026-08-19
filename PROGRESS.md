@@ -73,16 +73,19 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 ## Day 3 — Contracts
 
 ### EPIC 03 — Contracts & transport · *gate: TS + Dart clients round-trip*
+> **Gate NOT met.** Go client round-trips (`make contract`). TypeScript has no
+> test runner; Dart is blocked on Flutter being uninstallable. See
+> `docs/eng/transport.md`.
 - [x] 03.1 buf workspace + breaking checks
 - [x] 03.2 Proto packages
 - [x] 03.3 ★ Common types (`Money`, `Date`, `MathExplain`)
-- [ ] 03.4 Connect handlers in one binary
-- [ ] 03.5 Codegen: Go + TS + Dart
-- [ ] 03.6 Middleware (request id, slog, recovery, CORS, timeouts)
-- [ ] 03.7 Auth interceptor
-- [ ] 03.8 ★ Tenant interceptor + RLS session var
+- [x] 03.4 Connect handlers in one binary — 4 services, 20 RPCs; business logic stubbed to its owning epic
+- [x] 03.5 Codegen: Go + TS + Dart — needed `option go_package` in all 5 protos
+- [x] 03.6 Middleware (request id, slog, recovery, CORS, timeouts)
+- [x] 03.7 Auth interceptor — TokenVerifier seam; dev verifier refuses to build outside APP_ENV=dev. Firebase impl is 04.1
+- [x] 03.8 ★ Tenant interceptor + RLS session var — authorisation IS the RLS check, not an `if`
 - [x] 03.9 Error taxonomy (`docs/eng/errors.md`)
-- [ ] 03.10 Rate limiting middleware
+- [x] 03.10 Rate limiting middleware — measured 36 allowed / 24 throttled on a 60-call burst
 - [x] 03.11 Health / readiness / version
 
 ---

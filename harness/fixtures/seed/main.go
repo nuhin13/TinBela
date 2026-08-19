@@ -20,6 +20,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -156,11 +157,15 @@ func seed(ctx context.Context, tx pgx.Tx, start, end time.Time) (map[string]int,
 		if i == 0 {
 			managerUser = userID
 		}
+		// firebase_uid is set so the dev token verifier has something to
+		// resolve: `Authorization: Bearer dev:<firebase_uid>`. Real uids
+		// arrive with Epic 04.
+		firebaseUID := "dev-" + strings.TrimPrefix(m.phone, "+")
 		if _, err := tx.Exec(ctx, `
-			INSERT INTO users (id, phone_e164, name, locale, use_bangla_numerals)
-			VALUES ($1, $2, $3, 'bn', true)
+			INSERT INTO users (id, firebase_uid, phone_e164, name, locale, use_bangla_numerals)
+			VALUES ($1, $2, $3, $4, 'bn', true)
 			ON CONFLICT (id) DO NOTHING`,
-			userID, m.phone, m.name); err != nil {
+			userID, firebaseUID, m.phone, m.name); err != nil {
 			return nil, fmt.Errorf("user %s: %w", m.name, err)
 		}
 

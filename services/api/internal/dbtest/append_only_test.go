@@ -27,7 +27,7 @@ func TestAppendOnlyTables(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	owner, _ := newTestDatabase(ctx, t, "tinbela_append_only_test")
+	owner, _ := NewTestDatabase(ctx, t, "tinbela_append_only_test")
 	fx := seedProtectedRows(ctx, t, owner)
 
 	cases := []struct {
