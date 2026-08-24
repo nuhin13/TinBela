@@ -49,7 +49,7 @@ func (r repo) ByFirebaseUID(ctx context.Context, firebaseUID string) (Caller, er
 // mess does not get a rejected row, they get no row.
 func (r repo) MembershipFor(ctx context.Context, tx pgx.Tx, userID, tenantID uuid.UUID) (TenantScope, error) {
 	m, err := db.New(tx).GetMembershipForUserInTenant(ctx, db.GetMembershipForUserInTenantParams{
-		UserID:   userID,
+		UserID:   pgUUID(userID),
 		TenantID: tenantID,
 	})
 	if err != nil {

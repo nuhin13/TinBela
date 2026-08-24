@@ -18,8 +18,8 @@ WHERE user_id = $1 AND tenant_id = $2 AND left_at IS NULL
 `
 
 type GetMembershipForUserInTenantParams struct {
-	UserID   uuid.UUID `json:"user_id"`
-	TenantID uuid.UUID `json:"tenant_id"`
+	UserID   pgtype.UUID `json:"user_id"`
+	TenantID uuid.UUID   `json:"tenant_id"`
 }
 
 // The tenant interceptor's authorisation check: is this caller in this mess?
@@ -109,7 +109,7 @@ type ListMessesForUserRow struct {
 }
 
 // Every mess this user still belongs to, with their membership in it.
-func (q *Queries) ListMessesForUser(ctx context.Context, userID uuid.UUID) ([]ListMessesForUserRow, error) {
+func (q *Queries) ListMessesForUser(ctx context.Context, userID pgtype.UUID) ([]ListMessesForUserRow, error) {
 	rows, err := q.db.Query(ctx, listMessesForUser, userID)
 	if err != nil {
 		return nil, err

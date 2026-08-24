@@ -54,7 +54,7 @@ func (s coreService) GetMe(ctx context.Context, _ *connect.Request[corev1.GetMeR
 	if err != nil {
 		return nil, err
 	}
-	rows, err := q.ListMessesForUser(ctx, caller.UserID)
+	rows, err := q.ListMessesForUser(ctx, pgUUID(caller.UserID))
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (s coreService) CreateMess(ctx context.Context, req *connect.Request[corev1
 	}
 
 	if _, err := q.CreateMembership(ctx, db.CreateMembershipParams{
-		ID: uuid.New(), TenantID: tenantID, UserID: caller.UserID,
+		ID: uuid.New(), TenantID: tenantID, UserID: pgUUID(caller.UserID),
 		Role: "MANAGER", DisplayName: displayNameFor(ctx, q, caller),
 		JoinedAt: pgDate(start),
 	}); err != nil {
@@ -343,7 +343,7 @@ func protoRole(s string) corev1.Role {
 // a linked user beats an opened link, which beats a link merely minted.
 func inviteState(r db.ListMembersWithUserRow) corev1.InviteState {
 	switch {
-	case r.UserID != uuid.Nil:
+	case r.UserID.Valid:
 		return corev1.InviteState_INVITE_STATE_LINKED
 	case r.InviteOpenedAt.Valid:
 		return corev1.InviteState_INVITE_STATE_OPENED
@@ -378,6 +378,14 @@ func pgTime(hhmm string) pgtype.Time {
 
 func pgDate(t time.Time) pgtype.Date {
 	return pgtype.Date{Time: t, Valid: true}
+}
+
+// pgUUID wraps a known id for a column that is now nullable (migration
+// 000005). The zero pgtype.UUID is Valid:false, which is how a pending
+// membership -- a member with no account yet -- reaches the database as
+// NULL without anyone having to spell it.
+func pgUUID(id uuid.UUID) pgtype.UUID {
+	return pgtype.UUID{Bytes: id, Valid: true}
 }
 
 // displayNameFor falls back to the account name for the manager's own

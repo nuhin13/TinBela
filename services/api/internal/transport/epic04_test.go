@@ -2,7 +2,6 @@ package transport_test
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -26,7 +25,7 @@ func TestEpic04Gate(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
-	core, cleanup := newAPI(ctx, t, "tinbela_epic04_test", "dev-manager", "aaaa0000-0000-0000-0000-0000000004a1")
+	core, owner, cleanup := newAPI(ctx, t, "tinbela_epic04_test", "dev-manager", "aaaa0000-0000-0000-0000-0000000004a1")
 	defer cleanup()
 
 	auth := func(r interface{ Header() http.Header }, tenant string) {
@@ -97,7 +96,15 @@ func TestEpic04Gate(t *testing.T) {
 	}
 
 	t.Run("a member cannot add members", func(t *testing.T) {
-		// Task 04.7: MANAGER writes, MEMBER reads.
+		// Task 04.7: MANAGER writes, MEMBER reads. সাদিয়া was added as a
+		// pending member above; give her an account so the request gets
+		// past authentication and is refused on her ROLE, which is the
+		// thing under test. Without this the call fails as
+		// unauthenticated and proves nothing about authorisation.
+		const memberUID = "aaaa0000-0000-0000-0000-0000000004b2"
+		seedUser(ctx, t, owner, memberUID, "dev-member", "সাদিয়া")
+		claimInvite(ctx, t, owner, messID, "সাদিয়া", memberUID)
+
 		memberReq := connect.NewRequest(&corev1.AddMemberRequest{
 			MessId: messID, DisplayName: "smuggled",
 		})
@@ -122,12 +129,13 @@ func TestEpic04Gate(t *testing.T) {
 }
 
 // newAPI spins the whole stack on a throwaway database and returns a
-// generated client for it.
-func newAPI(ctx context.Context, t *testing.T, dbName, firebaseUID, userID string) (corev1connect.CoreServiceClient, func()) {
+// generated client for it, plus the owner connection -- some arrangements
+// (linking an invite) have no RPC yet and have to be made in SQL.
+func newAPI(ctx context.Context, t *testing.T, dbName, firebaseUID, userID string) (corev1connect.CoreServiceClient, *pgx.Conn, func()) {
 	t.Helper()
 
 	owner, appDSN := dbtest.NewTestDatabase(ctx, t, dbName)
-	seedUser(ctx, t, owner, userID, firebaseUID)
+	seedUser(ctx, t, owner, userID, firebaseUID, "ম্যানেজার")
 
 	pool, err := pgxpool.New(ctx, appDSN)
 	if err != nil {
@@ -150,17 +158,35 @@ func newAPI(ctx context.Context, t *testing.T, dbName, firebaseUID, userID strin
 	})
 	srv := httptest.NewServer(mux)
 
-	return corev1connect.NewCoreServiceClient(srv.Client(), srv.URL), func() {
+	return corev1connect.NewCoreServiceClient(srv.Client(), srv.URL), owner, func() {
 		srv.Close()
 		pool.Close()
 	}
 }
 
-func seedUser(ctx context.Context, t *testing.T, conn *pgx.Conn, userID, firebaseUID string) {
+func seedUser(ctx context.Context, t *testing.T, conn *pgx.Conn, userID, firebaseUID, name string) {
 	t.Helper()
-	if _, err := conn.Exec(ctx, fmt.Sprintf(
-		`INSERT INTO users (id, firebase_uid, name, locale) VALUES ('%s', '%s', 'ম্যানেজার', 'bn')`,
-		userID, firebaseUID)); err != nil {
+	if _, err := conn.Exec(ctx,
+		`INSERT INTO users (id, firebase_uid, name, locale) VALUES ($1, $2, $3, 'bn')`,
+		userID, firebaseUID, name); err != nil {
 		t.Fatalf("seed user: %v", err)
+	}
+}
+
+// claimInvite is what opening an invite link will eventually do: attach an
+// account to a membership that was minted without one. There is no RPC for
+// it yet (task 04.2), so the test performs the UPDATE itself -- as the
+// owner, which bypasses RLS.
+func claimInvite(ctx context.Context, t *testing.T, conn *pgx.Conn, tenantID, displayName, userID string) {
+	t.Helper()
+	tag, err := conn.Exec(ctx,
+		`UPDATE memberships SET user_id = $1, invite_opened_at = now()
+		 WHERE tenant_id = $2 AND display_name = $3 AND user_id IS NULL`,
+		userID, tenantID, displayName)
+	if err != nil {
+		t.Fatalf("claim invite: %v", err)
+	}
+	if tag.RowsAffected() != 1 {
+		t.Fatalf("claim invite: %d rows affected, want 1", tag.RowsAffected())
 	}
 }

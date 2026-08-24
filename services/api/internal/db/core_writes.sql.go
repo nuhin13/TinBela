@@ -22,7 +22,7 @@ RETURNING id, tenant_id, user_id, group_id, role, fee_category, display_name, jo
 type CreateMembershipParams struct {
 	ID          uuid.UUID   `json:"id"`
 	TenantID    uuid.UUID   `json:"tenant_id"`
-	UserID      uuid.UUID   `json:"user_id"`
+	UserID      pgtype.UUID `json:"user_id"`
 	Role        string      `json:"role"`
 	DisplayName string      `json:"display_name"`
 	JoinedAt    pgtype.Date `json:"joined_at"`
@@ -198,7 +198,7 @@ ORDER BY m.display_name
 type ListMembersWithUserRow struct {
 	ID             uuid.UUID          `json:"id"`
 	TenantID       uuid.UUID          `json:"tenant_id"`
-	UserID         uuid.UUID          `json:"user_id"`
+	UserID         pgtype.UUID        `json:"user_id"`
 	GroupID        pgtype.UUID        `json:"group_id"`
 	Role           string             `json:"role"`
 	FeeCategory    *string            `json:"fee_category"`
