@@ -23,6 +23,11 @@ services:
       PG_DSN: postgres://tinbela_app:tinbela_app@postgres:5432/tinbela?sslmode=disable
       HTTP_PORT: "8080"
       TZ: Asia/Dhaka
+      # NewDevVerifier refuses to construct unless this is exactly "dev", so
+      # without it the container exits at startup. Compose is the local dev
+      # stack; a real deployment sets APP_ENV to something else and gets the
+      # Firebase verifier (task 04.1) instead.
+      APP_ENV: ${APP_ENV:-dev}
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }
