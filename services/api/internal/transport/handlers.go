@@ -2,10 +2,18 @@ package transport
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/droidbuilder/tinbela/services/api/internal/core"
+	"github.com/droidbuilder/tinbela/services/api/internal/invites"
 
 	"github.com/droidbuilder/tinbela/services/api/internal/db"
 	adminv1 "github.com/droidbuilder/tinbela/services/api/internal/gen/tinbela/admin/v1"
@@ -89,14 +97,297 @@ func tenantKind(s string) corev1.TenantKind {
 	}
 }
 
-func (coreService) CreateMess(context.Context, *connect.Request[corev1.CreateMessRequest]) (*connect.Response[corev1.CreateMessResponse], error) {
-	return nil, notYet("04", "04.3")
+// defaultSlots are the meal slots a new mess starts with, in the order a
+// day happens. slot_count picks from the END of this list, because a mess
+// that serves two meals serves lunch and dinner -- breakfast is the one
+// people skip (Epic 09's third onboarding question).
+var defaultSlots = []struct {
+	bn, en, cutoff string
+}{
+	{"সকাল", "Breakfast", "07:00"},
+	{"দুপুর", "Lunch", "10:30"},
+	{"রাত", "Dinner", "17:00"},
 }
-func (coreService) AddMember(context.Context, *connect.Request[corev1.AddMemberRequest]) (*connect.Response[corev1.AddMemberResponse], error) {
-	return nil, notYet("04", "04.4")
+
+// CreateMess brings a mess into existence: tenant, slots, the first open
+// period, and the caller's manager membership.
+//
+// All of it in the request transaction, so a partial failure leaves
+// nothing -- a mess with no slots or no period is worse than no mess,
+// because the manager cannot tell it is broken until the month ends.
+func (s coreService) CreateMess(ctx context.Context, req *connect.Request[corev1.CreateMessRequest]) (*connect.Response[corev1.CreateMessResponse], error) {
+	caller, ok := CallerFrom(ctx)
+	if !ok {
+		return nil, core.ErrUnauthenticated
+	}
+	tx, ok := TxFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	name := strings.TrimSpace(req.Msg.GetName())
+	if name == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("mess name is required"))
+	}
+	slotCount := int(req.Msg.GetSlotCount())
+	if slotCount < 1 || slotCount > len(defaultSlots) {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			fmt.Errorf("slot_count must be between 1 and %d", len(defaultSlots)))
+	}
+
+	tenantID := uuid.New()
+
+	// The caller has no membership in a mess that does not exist yet, so
+	// app.tenant_id is unset and the RLS WITH CHECK would reject every
+	// INSERT below. Scoping the transaction to the id we are about to
+	// create is what makes creation possible without loosening a policy.
+	if _, err := tx.Exec(ctx,
+		"SELECT set_config('app.tenant_id', $1, true)", tenantID.String()); err != nil {
+		return nil, err
+	}
+
+	q := db.New(tx)
+	kind := "MESS"
+	if req.Msg.GetKind() == corev1.TenantKind_TENANT_KIND_HOME {
+		kind = "HOME"
+	}
+	tenant, err := q.CreateTenant(ctx, db.CreateTenantParams{
+		ID: tenantID, Name: name, Kind: kind,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	slots := defaultSlots[len(defaultSlots)-slotCount:]
+	outSlots := make([]*corev1.Slot, 0, len(slots))
+	for i, sl := range slots {
+		created, err := q.CreateSlot(ctx, db.CreateSlotParams{
+			ID: uuid.New(), TenantID: tenantID,
+			NameBn: sl.bn, NameEn: sl.en,
+			SortOrder: int32(i + 1), CutoffLocal: pgTime(sl.cutoff),
+		})
+		if err != nil {
+			return nil, err
+		}
+		outSlots = append(outSlots, &corev1.Slot{
+			Id: created.ID.String(), NameBn: created.NameBn, NameEn: created.NameEn,
+			SortOrder: created.SortOrder, CutoffLocal: sl.cutoff, Active: created.Active,
+		})
+	}
+
+	// The first period is the current month in Asia/Dhaka. Boundaries are a
+	// server-side concern (Invariant 5) -- a manager travelling does not
+	// move their month.
+	start, end := currentMonth()
+	period, err := q.CreatePeriod(ctx, db.CreatePeriodParams{
+		ID: uuid.New(), TenantID: tenantID,
+		StartDate: pgDate(start), EndDate: pgDate(end),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := q.CreateMembership(ctx, db.CreateMembershipParams{
+		ID: uuid.New(), TenantID: tenantID, UserID: caller.UserID,
+		Role: "MANAGER", DisplayName: displayNameFor(ctx, q, caller),
+		JoinedAt: pgDate(start),
+	}); err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&corev1.CreateMessResponse{
+		Mess: &corev1.Mess{
+			Id: tenant.ID.String(), Name: tenant.Name,
+			Kind: tenantKind(tenant.Kind), Slots: outSlots,
+			CurrentPeriodId: period.ID.String(),
+		},
+		// InviteLink is deliberately empty. The schema has no mess-level
+		// invite -- invite_token is per membership -- so there is nothing
+		// to put here. Per-member links come from AddMember. Whether this
+		// field should exist at all is a product decision, not one to
+		// invent a value for.
+	}), nil
 }
-func (coreService) ListMembers(context.Context, *connect.Request[corev1.ListMembersRequest]) (*connect.Response[corev1.ListMembersResponse], error) {
-	return nil, notYet("04", "04.7")
+
+// AddMember adds someone by name and mints their invite link.
+//
+// No user account is required: the manager types a name, and the link is
+// what turns that name into an account later. That ordering is the whole
+// onboarding design -- a manager can set up the entire mess alone, at
+// night, without anyone else installing anything.
+func (s coreService) AddMember(ctx context.Context, req *connect.Request[corev1.AddMemberRequest]) (*connect.Response[corev1.AddMemberResponse], error) {
+	scope, err := requireManager(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := sameMess(req.Msg.GetMessId(), scope); err != nil {
+		return nil, err
+	}
+	tx, ok := TxFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	name := strings.TrimSpace(req.Msg.GetDisplayName())
+	if name == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("display_name is required"))
+	}
+
+	token, err := invites.NewToken()
+	if err != nil {
+		return nil, err
+	}
+
+	start, _ := currentMonth()
+	m, err := db.New(tx).CreateMembership(ctx, db.CreateMembershipParams{
+		ID: uuid.New(), TenantID: scope.TenantID,
+		Role: "MEMBER", DisplayName: name, JoinedAt: pgDate(start),
+		InviteToken: &token,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&corev1.AddMemberResponse{
+		Member: &corev1.Member{
+			Id: m.ID.String(), DisplayName: m.DisplayName,
+			PhoneE164: req.Msg.GetPhoneE164(),
+			Role:      corev1.Role_ROLE_MEMBER,
+			// SENT, not LINKED: the link exists, nobody has opened it.
+			InviteState: corev1.InviteState_INVITE_STATE_SENT,
+		},
+		InviteLink: invites.Link(token),
+	}), nil
+}
+
+func (s coreService) ListMembers(ctx context.Context, req *connect.Request[corev1.ListMembersRequest]) (*connect.Response[corev1.ListMembersResponse], error) {
+	scope, ok := TenantFrom(ctx)
+	if !ok {
+		return nil, core.ErrNotMember
+	}
+	if err := sameMess(req.Msg.GetMessId(), scope); err != nil {
+		return nil, err
+	}
+	tx, ok := TxFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	rows, err := db.New(tx).ListMembersWithUser(ctx, scope.TenantID)
+	if err != nil {
+		return nil, err
+	}
+
+	out := &corev1.ListMembersResponse{}
+	for _, r := range rows {
+		mem := &corev1.Member{
+			Id: r.ID.String(), DisplayName: r.DisplayName,
+			Role:        protoRole(r.Role),
+			InviteState: inviteState(r),
+		}
+		if r.UserPhone != nil {
+			mem.PhoneE164 = *r.UserPhone
+		}
+		out.Members = append(out.Members, mem)
+	}
+	return connect.NewResponse(out), nil
+}
+
+// requireManager is task 04.7 in one place. A MEMBER may read their mess;
+// only a MANAGER changes it. Enforcing it per-handler rather than per-role
+// map keeps the check next to the operation it guards.
+func requireManager(ctx context.Context) (TenantScope, error) {
+	scope, ok := TenantFrom(ctx)
+	if !ok {
+		return TenantScope{}, core.ErrNotMember
+	}
+	if scope.Role != "MANAGER" {
+		return TenantScope{}, core.ErrNotManager
+	}
+	return scope, nil
+}
+
+// sameMess reconciles the mess_id in the request body with the scope the
+// interceptor authorised from the X-Tenant-Id header.
+//
+// Only the header is authorised, so the body field can never be the one we
+// act on. But silently ignoring it is worse than it looks: a client that
+// sets mess_id to a different mess would see the call succeed against a
+// mess it did not name. Disagreement is treated as a cross-tenant attempt,
+// which means the caller learns nothing about whether that other mess
+// exists.
+func sameMess(messID string, scope TenantScope) error {
+	if messID == "" {
+		return nil
+	}
+	if messID != scope.TenantID.String() {
+		return core.ErrTenantMismatch
+	}
+	return nil
+}
+
+func protoRole(s string) corev1.Role {
+	switch s {
+	case "MANAGER":
+		return corev1.Role_ROLE_MANAGER
+	case "MEMBER":
+		return corev1.Role_ROLE_MEMBER
+	default:
+		return corev1.Role_ROLE_UNSPECIFIED
+	}
+}
+
+// inviteState reads the member's progress from the columns that record it:
+// a linked user beats an opened link, which beats a link merely minted.
+func inviteState(r db.ListMembersWithUserRow) corev1.InviteState {
+	switch {
+	case r.UserID != uuid.Nil:
+		return corev1.InviteState_INVITE_STATE_LINKED
+	case r.InviteOpenedAt.Valid:
+		return corev1.InviteState_INVITE_STATE_OPENED
+	case r.InviteToken != nil:
+		return corev1.InviteState_INVITE_STATE_SENT
+	default:
+		return corev1.InviteState_INVITE_STATE_UNSPECIFIED
+	}
+}
+
+// currentMonth is the Asia/Dhaka month containing now (Invariant 5).
+func currentMonth() (time.Time, time.Time) {
+	loc, err := time.LoadLocation("Asia/Dhaka")
+	if err != nil {
+		loc = time.UTC
+	}
+	now := time.Now().In(loc)
+	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
+	return start, start.AddDate(0, 1, -1)
+}
+
+// pgTime converts "HH:MM" to Postgres time-of-day. Cutoffs are wall-clock
+// times in Asia/Dhaka, not instants, so there is no date or zone involved.
+func pgTime(hhmm string) pgtype.Time {
+	var h, m int
+	_, _ = fmt.Sscanf(hhmm, "%d:%d", &h, &m)
+	return pgtype.Time{
+		Microseconds: int64(h)*3600*1_000_000 + int64(m)*60*1_000_000,
+		Valid:        true,
+	}
+}
+
+func pgDate(t time.Time) pgtype.Date {
+	return pgtype.Date{Time: t, Valid: true}
+}
+
+// displayNameFor falls back to the account name for the manager's own
+// membership. A mess where the manager shows up as "" is a bug the manager
+// sees on the first screen.
+func displayNameFor(ctx context.Context, q *db.Queries, c Caller) string {
+	if u, err := q.GetUser(ctx, c.UserID); err == nil && u.Name != "" {
+		return u.Name
+	}
+	return "ম্যানেজার"
 }
 
 // mealsService implements tinbela.meals.v1.MealsService (Epic 05).
