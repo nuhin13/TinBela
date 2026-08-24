@@ -1,0 +1,23 @@
+/* GENERATED — DO NOT EDIT. Run `make tokens`. */
+:root {
+  --tb-primary: #1B7A4E;
+  --tb-accent: #E39312;
+  --tb-alert: #C0392B;
+  --tb-surface: #FAF6EF;
+  --tb-card: #FFFFFF;
+  --tb-ink: #1A1A1A;
+  --tb-inkMuted: #6B6B6B;
+  --tb-tint: #E8F3ED;
+  --tb-divider: #E8E2D8;
+  --tb-space-xs: 4px;
+  --tb-space-sm: 8px;
+  --tb-space-md: 12px;
+  --tb-space-lg: 16px;
+  --tb-space-xl: 24px;
+  --tb-space-xxl: 32px;
+  --tb-radius-card: 16px;
+  --tb-radius-button: 12px;
+  --tb-radius-chip: 8px;
+  --tb-radius-appIcon: 64px;
+  --tb-touch-min: 48px;
+}

@@ -1,0 +1,32 @@
+name: tinbela_manager
+description: "TinBela manager app — the daily mess loop, in Bangla."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # bn/en ARB strings. No hardcoded user-visible strings (apps/manager/AGENTS.md).
+  intl: any
+
+  # Runtime for the generated Dart message types in lib/core/api/gen.
+  # Messages only — the transport is plain HTTP/JSON against Connect's JSON
+  # codec, so there is deliberately no Connect Dart client here (ADR-0003).
+  protobuf: ^6.0.0
+  fixnum: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true # runs gen-l10n from l10n.yaml on build

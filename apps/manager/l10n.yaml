@@ -1,0 +1,9 @@
+# bn is the source of truth; en is the translation (apps/manager/AGENTS.md).
+# Output lands under .../i18n/l10n/ deliberately: harness/check-hardcoded-strings.sh
+# skips paths matching "l10n", and the generated file is full of string literals.
+arb-dir: lib/core/i18n
+template-arb-file: app_bn.arb
+output-dir: lib/core/i18n/l10n
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

@@ -1,0 +1,23 @@
+{
+  "@@locale": "bn",
+  "appTitle": "টিনবেলা",
+  "@appTitle": {
+    "description": "App name shown in the Android task switcher and browser tab."
+  },
+  "navToday": "আজ",
+  "@navToday": {
+    "description": "Bottom nav tab 1 — the daily loop. The product."
+  },
+  "navGrid": "খাতা",
+  "@navGrid": {
+    "description": "Bottom nav tab 2 — the month grid, the paper khata people already know."
+  },
+  "navAccounts": "হিসাব",
+  "@navAccounts": {
+    "description": "Bottom nav tab 3 — money and balances."
+  },
+  "navMore": "আরও",
+  "@navMore": {
+    "description": "Bottom nav tab 4 — members and settings."
+  }
+}
