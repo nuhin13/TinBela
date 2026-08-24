@@ -1,0 +1,5 @@
+[     600ms] [INFO] DDC is about to load 1/2 scripts with pool size = 1000 @ http://localhost:5173/ddc_module_loader.js:1014
+[     792ms] [INFO] DDC is about to load 339/339 scripts with pool size = 1000 @ http://localhost:5173/ddc_module_loader.js:1014
+[    1439ms] [LOG] Starting application from main method in: org-dartlang-app:///web_entrypoint.dart. @ http://localhost:5173/ddc_module_loader.js:1585
+[ 1965226ms] [ERROR] WebSocket connection to 'ws://localhost:5173/$dwdsSseHandler' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/dwds/src/injected/client.js:8367
+[ 1965430ms] [ERROR] WebSocket connection to 'ws://localhost:5173/$dwdsSseHandler' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/dwds/src/injected/client.js:8367

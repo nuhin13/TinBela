@@ -1,0 +1,16 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "localStorage",
+        "message": "No browser storage anywhere in this app (apps/web/AGENTS.md). The URL token is the only credential."
+      },
+      {
+        "name": "sessionStorage",
+        "message": "No browser storage anywhere in this app (apps/web/AGENTS.md). The URL token is the only credential."
+      }
+    ]
+  }
+}

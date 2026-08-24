@@ -1,0 +1,9 @@
+# pnpm blocks package install scripts by default -- a postinstall is
+# arbitrary code execution at install time, and that default is correct.
+# These two are approved explicitly (`pnpm approve-builds sharp unrs-resolver`).
+# Both are build-time only and neither ships to a member's phone:
+#   sharp          Next's image optimiser, runs at build
+#   unrs-resolver  eslint's native module resolver, runs at lint
+allowBuilds:
+  sharp: true
+  unrs-resolver: true

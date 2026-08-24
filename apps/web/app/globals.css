@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Bangla script needs more line height than the Latin default, and the
+     copy is Bangla-first (UX law 4). Setting it here rather than per-page
+     keeps a 130% text-scale user from clipping (Epic 18 task 18.7). */
+  html {
+    line-height: 1.7;
+  }
+
+  body {
+    @apply bg-surface text-ink;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Numbers are tabular everywhere so columns of money line up, in either
+     numeral system. UI_SPEC section 5. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
