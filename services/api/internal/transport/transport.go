@@ -51,6 +51,7 @@ func Register(mux *http.ServeMux, d Deps) {
 	//                 outside auth so auth's own errors are mapped too
 	//   auth          identity
 	//   tenant        scope, transaction, RLS session variable
+	//   role          what that scope's role permits (04.7)
 	common := []connect.Interceptor{
 		recoveryInterceptor(d.Logger),
 		requestIDInterceptor(),
@@ -63,7 +64,7 @@ func Register(mux *http.ServeMux, d Deps) {
 
 	scoped := connect.WithInterceptors(
 		append(append([]connect.Interceptor{}, common...),
-			tenantInterceptor(repo))...)
+			tenantInterceptor(repo), roleInterceptor())...)
 
 	// The admin surface reads across messes by definition, so it is mounted
 	// without the tenant interceptor and carries its own authorisation

@@ -25,7 +25,7 @@ func TestEpic04Gate(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
-	core, owner, cleanup := newAPI(ctx, t, "tinbela_epic04_test", "dev-manager", "aaaa0000-0000-0000-0000-0000000004a1")
+	core, owner, _, cleanup := newAPI(ctx, t, "tinbela_epic04_test", "dev-manager", "aaaa0000-0000-0000-0000-0000000004a1")
 	defer cleanup()
 
 	auth := func(r interface{ Header() http.Header }, tenant string) {
@@ -131,7 +131,7 @@ func TestEpic04Gate(t *testing.T) {
 // newAPI spins the whole stack on a throwaway database and returns a
 // generated client for it, plus the owner connection -- some arrangements
 // (linking an invite) have no RPC yet and have to be made in SQL.
-func newAPI(ctx context.Context, t *testing.T, dbName, firebaseUID, userID string) (corev1connect.CoreServiceClient, *pgx.Conn, func()) {
+func newAPI(ctx context.Context, t *testing.T, dbName, firebaseUID, userID string) (corev1connect.CoreServiceClient, *pgx.Conn, *httptest.Server, func()) {
 	t.Helper()
 
 	owner, appDSN := dbtest.NewTestDatabase(ctx, t, dbName)
@@ -158,7 +158,7 @@ func newAPI(ctx context.Context, t *testing.T, dbName, firebaseUID, userID strin
 	})
 	srv := httptest.NewServer(mux)
 
-	return corev1connect.NewCoreServiceClient(srv.Client(), srv.URL), owner, func() {
+	return corev1connect.NewCoreServiceClient(srv.Client(), srv.URL), owner, srv, func() {
 		srv.Close()
 		pool.Close()
 	}

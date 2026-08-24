@@ -295,15 +295,18 @@ func (s coreService) ListMembers(ctx context.Context, req *connect.Request[corev
 	return connect.NewResponse(out), nil
 }
 
-// requireManager is task 04.7 in one place. A MEMBER may read their mess;
-// only a MANAGER changes it. Enforcing it per-handler rather than per-role
-// map keeps the check next to the operation it guards.
+// requireManager returns the authorised scope, and re-checks the role.
+//
+// roleInterceptor (task 04.7) is the primary gate and rejects a MEMBER before
+// any handler runs, so the role check here is defence in depth in the same
+// spirit as RLS behind tenant scoping: two independent failures should be
+// required to write something the caller may not write.
 func requireManager(ctx context.Context) (TenantScope, error) {
 	scope, ok := TenantFrom(ctx)
 	if !ok {
 		return TenantScope{}, core.ErrNotMember
 	}
-	if scope.Role != "MANAGER" {
+	if scope.Role != roleManager {
 		return TenantScope{}, core.ErrNotManager
 	}
 	return scope, nil

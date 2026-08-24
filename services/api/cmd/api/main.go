@@ -51,7 +51,7 @@ func run(logger *slog.Logger) error {
 	}
 	defer pool.Close()
 
-	verifier, err := buildVerifier()
+	verifier, err := buildVerifier(ctx)
 	if err != nil {
 		return err
 	}
@@ -99,8 +99,12 @@ func run(logger *slog.Logger) error {
 // use a verifier that trusts "dev:<uid>" -- and NewDevVerifier refuses to
 // construct unless APP_ENV=dev, so a non-dev deployment fails at startup
 // rather than accepting anyone.
-func buildVerifier() (transport.TokenVerifier, error) {
-	return transport.NewDevVerifier()
+// buildVerifier picks the token verifier for this environment: the dev one
+// under APP_ENV=dev, Firebase ID token verification everywhere else. It
+// fails the boot rather than falling back, so a missing FIREBASE_PROJECT_ID
+// is a container that will not start instead of one that trusts anyone.
+func buildVerifier(ctx context.Context) (transport.TokenVerifier, error) {
+	return transport.NewVerifier(ctx)
 }
 
 func corsOrigins() []string {

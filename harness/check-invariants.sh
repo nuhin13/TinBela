@@ -29,7 +29,12 @@ HITS=$(grep -rn --include='*.go' --include='*.sql' -iE \
                || green "append-only respected"
 
 # 3. No browser storage in the member PWA (code only, not docs)
+# OUR code only: node_modules and .next are full of localStorage and neither
+# is ours to fix. Without these excludes the check fails the moment apps/web
+# has a single dependency, which makes it useless exactly when it starts to
+# matter.
 HITS=$(grep -rn --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' \
+        --exclude-dir=node_modules --exclude-dir=.next \
         -E 'localStorage|sessionStorage' apps/web 2>/dev/null || true)
 [ -n "$HITS" ] && { red "browser storage in the member PWA"; echo "$HITS" | head -5; } \
                || green "no browser storage in PWA"
