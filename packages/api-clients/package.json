@@ -1,0 +1,25 @@
+{
+  "name": "@tinbela/api-clients",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generated TypeScript client for the TinBela API. Regenerate with `make proto`; never hand-edit gen/.",
+  "exports": {
+    "./core": "./gen/tinbela/core/v1/core_pb.ts",
+    "./meals": "./gen/tinbela/meals/v1/meals_pb.ts",
+    "./money": "./gen/tinbela/money/v1/money_pb.ts",
+    "./admin": "./gen/tinbela/admin/v1/admin_pb.ts"
+  },
+  "scripts": {
+    "test": "node --import tsx --test test/*.test.ts",
+    "test:live": "node --import tsx test/live_round_trip.ts"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.14.0",
+    "@connectrpc/connect": "^2.0.0",
+    "@connectrpc/connect-node": "^2.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
+}

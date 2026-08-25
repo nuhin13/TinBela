@@ -1,4 +1,4 @@
-.PHONY: help dev up down logs test verify lint property golden contract invariants \
+.PHONY: help dev up down logs test verify lint property golden contract contract-live onboarding-live invariants \
         migrate migrate-down migrate-check sqlc proto tokens seed smoke load clean
 
 API_DIR := services/api
@@ -80,6 +80,45 @@ contract: ## Proto compatibility + generated-client round trip
 		echo "  (no master branch — skipping breaking check)"; \
 	fi
 	cd $(API_DIR) && go test ./internal/transport -run 'Contract' -count=1
+	@# The TypeScript half of the gate, against wire bytes captured from the
+	@# running binary. Needs no stack, so it belongs in verify. The Dart half
+	@# runs in CI's flutter job (`flutter test`), which is the only place a
+	@# Flutter SDK is installed.
+	cd packages/api-clients && pnpm test
+
+contract-live: ## ★ Epic 03's gate — both generated clients against a REAL running binary
+	@# The gate says "round-trip a real call against the running binary", and
+	@# this is the literal reading of it: real socket, real Go process, real
+	@# Postgres. It is not in `verify` because it needs Docker; it is one
+	@# command so that "needs Docker" never becomes "nobody runs it".
+	docker compose up -d
+	@# Migrate BEFORE waiting on readiness. The api connects as tinbela_app,
+	@# a role migration 000003 creates -- so on a fresh volume readyz can
+	@# never go green until migrations have run, and waiting first deadlocks.
+	$(MAKE) migrate
+	go run ./harness/fixtures/seed
+	@# Migrating can drop and recreate tables, which leaves the api's pooled
+	@# connections holding cached statement plans for tables that no longer
+	@# exist. Every call then fails until the process restarts. Restarting
+	@# here is cheap; debugging it as "unauthenticated" is not.
+	docker compose restart api
+	@printf 'waiting for the api'
+	@until curl -sf -o /dev/null http://localhost:8080/readyz; do printf '.'; sleep 1; done; echo ''
+	cd packages/api-clients && pnpm test:live
+	cd apps/manager && dart run tool/live_round_trip.dart
+	@echo ""
+	@echo "  ✓ Epic 03 gate: TypeScript and Dart both round-trip the running binary"
+
+onboarding-live: ## Drive the app's own repositories against a running stack (08.1)
+	@# Proves the layer the SCREENS depend on, not just the transport:
+	@# config -> client -> repository -> domain type, in the order
+	@# OnboardingFlow calls them. Creates a real mess, so it is never in verify.
+	@#
+	@# It leaves a pending membership (a member with no user account yet),
+	@# which migration 000005 deliberately refuses to roll back. So
+	@# `make verify` will fail its migrate-check afterwards until the dev
+	@# database is reset:  make clean && make dev
+	cd apps/manager && dart run tool/live_onboarding.dart
 
 invariants: ## Grep-level guards that types cannot express
 	@./harness/check-invariants.sh

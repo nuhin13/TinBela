@@ -34,6 +34,18 @@ jobs:
 
       - uses: bufbuild/buf-setup-action@v1
 
+      # `make lint` runs `pnpm lint` in apps/web, and `make contract` runs
+      # the generated TypeScript client's tests. Both need node and pnpm.
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+
+      - name: Install JS dependencies
+        run: |
+          pnpm --dir packages/api-clients install --frozen-lockfile
+          pnpm --dir apps/web install --frozen-lockfile
+
       - name: Install tools
         run: |
           # -tags postgres, or the binary has no database drivers and
