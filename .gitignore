@@ -49,3 +49,8 @@ service-account*.json
 .idea/
 .vscode/
 *.swp
+
+# Browser-automation debris from agent sessions. Screenshots and console
+# dumps are evidence for one conversation, never repository content.
+.playwright-mcp/
+tinbela-web.png
