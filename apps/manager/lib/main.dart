@@ -3,19 +3,40 @@
 // Setup, in order:
 //   1. make tokens          → generates core/theme/tokens.g.dart
 //   2. cd apps/manager && flutter pub get   (also runs gen-l10n, see l10n.yaml)
-//   3. flutter run                          → Android emulator or device
-//      flutter run -d chrome                → no emulator needed, same shell
+//   3. Boot the API:  make dev              → localhost:8080, seeded
+//   4. ./tool/run_dev.sh                    → picks the right host for your
+//                                             emulator or wireless device
 //
-// You will see the four-tab navigation shell immediately.
-//
-// The Android emulator wants ~12 GB of free disk before it will boot; the
-// chrome target wants none, which is the only difference between the two.
+// The dev flavor authenticates as a seeded user with a `dev:<uid>` bearer
+// token, so the whole onboarding flow runs against the real API before
+// Firebase exists (task 09.2).
 
 import 'package:flutter/material.dart';
 
 import 'app.dart';
+import 'core/api/connect_client.dart';
+import 'core/config/app_config.dart';
+import 'core/data/repositories.dart';
+import 'core/settings/locale_store.dart';
 
-void main() {
-  // TODO(08.9): Firebase.initializeApp() + Google Sign-In before runApp.
-  runApp(const TinBelaApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final config = AppConfig.fromEnvironment();
+  final localeStore = await LocaleStore.open();
+
+  // TODO(08.9): in prod the token comes from Firebase, refreshed per call.
+  // The seam is already the right shape -- ConnectClient asks for a token on
+  // every request rather than holding one, so nothing above changes.
+  final client = ConnectClient(
+    baseUrl: config.apiBaseUrl,
+    token: () => config.isDev ? 'dev:${config.devFirebaseUid}' : null,
+  );
+
+  runApp(TinBelaApp(
+    config: config,
+    localeController: LocaleController(localeStore),
+    session: RemoteSessionRepository(client),
+    messes: RemoteMessesRepository(client),
+  ));
 }

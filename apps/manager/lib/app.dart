@@ -15,19 +15,46 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'core/api/api_error.dart';
+import 'core/config/app_config.dart';
+import 'core/data/repositories.dart';
+import 'core/domain/models.dart';
 import 'core/i18n/l10n/app_localizations.dart'; // run `flutter gen-l10n`
+import 'core/settings/locale_store.dart';
 import 'core/theme/tokens.g.dart'; // run `make tokens` to generate
+import 'core/widgets/async_states.dart';
+import 'features/onboarding/onboarding_flow.dart';
 
 class TinBelaApp extends StatelessWidget {
-  const TinBelaApp({super.key});
+  const TinBelaApp({
+    super.key,
+    required this.config,
+    required this.localeController,
+    required this.session,
+    required this.messes,
+  });
+
+  final AppConfig config;
+  final LocaleController localeController;
+  final SessionRepository session;
+  final MessesRepository messes;
 
   @override
   Widget build(BuildContext context) {
+    // Rebuilds the whole app on a language change so every string re-resolves
+    // -- including the ones already on screen behind the picker.
+    return ListenableBuilder(
+      listenable: localeController,
+      builder: (context, _) => _buildApp(context),
+    );
+  }
+
+  Widget _buildApp(BuildContext context) {
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       // bn is the default and the source of truth; en is the translation.
-      locale: const Locale('bn'),
+      locale: localeController.locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -48,9 +75,72 @@ class TinBelaApp extends StatelessWidget {
         // Bangla renders with Hind Siliguri. TODO(08.2): bundle the font.
         fontFamily: 'Hind Siliguri',
       ),
-      home: const HomeShell(),
+      home: _Root(
+        session: session,
+        messes: messes,
+        localeController: localeController,
+      ),
     );
   }
+}
+
+/// Decides between onboarding and the shell, and is the only place that
+/// decision is made.
+///
+/// The question "does this manager have a mess yet" is answered by GetMe,
+/// not by a local flag: a manager who reinstalls, or signs in on a second
+/// phone, must land in their mess rather than be asked to create it again.
+class _Root extends StatefulWidget {
+  const _Root({
+    required this.session,
+    required this.messes,
+    required this.localeController,
+  });
+
+  final SessionRepository session;
+  final MessesRepository messes;
+  final LocaleController localeController;
+
+  @override
+  State<_Root> createState() => _RootState();
+}
+
+class _RootState extends State<_Root> {
+  late Future<Session> _session = widget.session.getMe();
+
+  void _reload() => setState(() => _session = widget.session.getMe());
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Session>(
+      future: _session,
+      builder: (context, snapshot) {
+        // An unauthenticated caller is not an error state here: it is a
+        // manager with no account yet, and the answer is onboarding.
+        final error = snapshot.error;
+        if (error is ApiException &&
+            error.code == ApiErrorCode.unauthenticated) {
+          return _onboarding();
+        }
+
+        return Scaffold(
+          body: AsyncStateView<Session>(
+            snapshot: snapshot,
+            onRetry: _reload,
+            builder: (context, session) =>
+                session.needsOnboarding ? _onboarding() : const HomeShell(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _onboarding() => OnboardingFlow(
+        messes: widget.messes,
+        locale: widget.localeController.locale,
+        onLocaleSelected: widget.localeController.set,
+        onFinished: (_) => _reload(),
+      );
 }
 
 /// The four tabs of v1.0. Adding a fifth is a scope change, not a UI change.

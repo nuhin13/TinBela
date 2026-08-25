@@ -28,6 +28,11 @@ services:
       # stack; a real deployment sets APP_ENV to something else and gets the
       # Firebase verifier (task 04.1) instead.
       APP_ENV: ${APP_ENV:-dev}
+      # Browser clients need an explicit origin allow-list -- never "*",
+      # because these requests carry a bearer token. Dev only: the member
+      # PWA on :3000 and the Flutter web target on :5555. Production sets
+      # its own real origins.
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5555}
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }
