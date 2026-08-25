@@ -7,3 +7,13 @@
 allowBuilds:
   sharp: true
   unrs-resolver: true
+
+# Transitive dependencies pulled in by `next` that carry known advisories.
+# Forced to their patched versions rather than taking a major Next upgrade
+# for a security fix (task 18.4). Re-check on every Next bump: an override
+# that outlives its reason silently pins a dependency.
+#   postcss  GHSA path traversal + arbitrary file read + XSS, fixed 8.5.23
+#   sharp    inherited libvips CVEs, fixed 0.35.0
+overrides:
+  postcss: ">=8.5.23"
+  sharp: ">=0.35.0"

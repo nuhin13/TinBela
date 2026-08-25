@@ -1,0 +1,54 @@
+name: security
+
+# Task 18.4 -- dependency and secret scanning.
+#
+# Separate from `ci` on purpose. A secret committed today is a secret leaked
+# today, so this also runs on a schedule: a new advisory against an unchanged
+# dependency must not wait for someone to open a pull request.
+on:
+  push: { branches: [master] }
+  pull_request:
+  schedule:
+    # 04:00 Asia/Dhaka, before anyone starts work.
+    - cron: "0 22 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        # gitleaks scans history, not just the tip: a secret removed in a
+        # later commit is still published in the one that added it.
+        with: { fetch-depth: 0 }
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.23", cache-dependency-path: services/api/go.sum }
+
+      - name: Go — reachable vulnerabilities
+        # govulncheck reports only what the code can actually call, and the
+        # allowlist records every accepted finding with an owner.
+        run: ./harness/check-vulns.sh
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+
+      - name: JavaScript — advisories
+        run: |
+          pnpm --dir packages/api-clients install --frozen-lockfile
+          pnpm --dir packages/api-clients audit
+          pnpm --dir apps/web install --frozen-lockfile
+          pnpm --dir apps/web audit

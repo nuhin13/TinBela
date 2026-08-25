@@ -1,0 +1,27 @@
+# Task 18.4 -- keep dependencies current so a scan finding is news, not a
+# backlog. Grouped and weekly: a daily firehose of single-package pull
+# requests is how dependency updates start getting ignored.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /services/api
+    schedule: { interval: weekly }
+    groups:
+      go: { patterns: ["*"] }
+
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule: { interval: weekly }
+    groups:
+      web: { patterns: ["*"] }
+
+  - package-ecosystem: npm
+    directory: /packages/api-clients
+    schedule: { interval: weekly }
+    groups:
+      clients: { patterns: ["*"] }
+
+  # The workflows themselves pin actions by major version; those move too.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
