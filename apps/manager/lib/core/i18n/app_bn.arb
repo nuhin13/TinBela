@@ -19,5 +19,134 @@
   "navMore": "আরও",
   "@navMore": {
     "description": "Bottom nav tab 4 — members and settings."
+  },
+  "retry": "আবার চেষ্টা করুন",
+  "@retry": {
+    "description": "Retry button on an error state. Short — it sits in a 48dp pill."
+  },
+  "errorGeneric": "কিছু একটা ভুল হয়েছে",
+  "@errorGeneric": {
+    "description": "Fallback error headline when the server sent no message of its own."
+  },
+  "errorOffline": "ইন্টারনেট সংযোগ নেই",
+  "@errorOffline": {
+    "description": "Shown when the request never reached the server. Mess wifi is bad; blame the network, not the user."
+  },
+  "errorRequestId": "সমস্যার কোড: {id}",
+  "@errorRequestId": {
+    "description": "Support reference. The user reads this out; it is never translated.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "nothingToDo": "কিছু করার নেই",
+  "@nothingToDo": {
+    "description": "The empty state that means FINISHED, not blank. A zero-exception day is a success, not an absence."
+  },
+  "allOnDefault": "বাকি সবাই ডিফল্ট প্যাটার্নে ✓",
+  "@allOnDefault": {
+    "description": "Second line of the finished-day state. Product rule: do not soften or remove."
+  },
+  "brandTagline": "তিনবেলার হিসাব, এক অ্যাপে।",
+  "@brandTagline": {
+    "description": "Welcome screen tagline, line 1. From prototype frame 1a."
+  },
+  "brandSubtitle": "মেস চালান ঝামেলা ছাড়া — দিনে ১ মিনিট।",
+  "@brandSubtitle": {
+    "description": "Welcome screen tagline, line 2."
+  },
+  "getStarted": "শুরু করুন",
+  "@getStarted": {
+    "description": "Primary button on the welcome screen."
+  },
+  "languageBangla": "বাংলা",
+  "@languageBangla": {
+    "description": "Language choice on the welcome screen. bn is the default."
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Language choice on the welcome screen. Never translated — it names itself."
+  },
+  "howItWorksTitle": "💡 তিনবেলা যেভাবে কাজ করে",
+  "@howItWorksTitle": {
+    "description": "Explainer card heading. Prototype frame 1c."
+  },
+  "howItWorksBody": "প্রত্যেকের একটা ডিফল্ট প্যাটার্ন থাকে। স্বাভাবিক দিনে কেউ কিছু করে না — শুধু ব্যতিক্রম (অফ / গেস্ট) হলে ১ ট্যাপ। বাকিটা অ্যাপ হিসাব করে।",
+  "@howItWorksBody": {
+    "description": "Explainer body. This is the product in three lines; do not shorten."
+  },
+  "createMess": "মেস তৈরি করুন →",
+  "@createMess": {
+    "description": "Button that leaves the explainer for mess setup."
+  },
+  "skip": "এড়িয়ে যান",
+  "@skip": {
+    "description": "Skips the explainer. Task 09.4 requires it be skippable."
+  },
+  "messCreated": "মেস তৈরি হয়েছে 🎉",
+  "@messCreated": {
+    "description": "Headline after a mess is created."
+  },
+  "inviteLinkLabel": "সদস্যদের এই লিংক পাঠান",
+  "@inviteLinkLabel": {
+    "description": "Label above the invite link."
+  },
+  "copy": "কপি",
+  "@copy": {
+    "description": "Copies the invite link."
+  },
+  "copied": "লিংক কপি হয়েছে",
+  "@copied": {
+    "description": "Toast after copying. Confirmation is a toast, never a dialog."
+  },
+  "shareWhatsApp": "WhatsApp",
+  "@shareWhatsApp": {
+    "description": "Share target. A brand name — never translated."
+  },
+  "shareMessenger": "Messenger",
+  "@shareMessenger": {
+    "description": "Share target. A brand name — never translated."
+  },
+  "demoBannerTitle": "👋 এটি একটি ডেমো মেস",
+  "@demoBannerTitle": {
+    "description": "Demo mess banner heading. Prototype frame 2."
+  },
+  "demoBannerBody": "যেকোনো জায়গায় চাপ দিয়ে দেখুন — কিছুই ভাঙবে না। প্রস্তুত হলে নিজের মেস খুলুন।",
+  "@demoBannerBody": {
+    "description": "Demo banner body. Poke-safe is the promise; keep it."
+  },
+  "demoBannerAction": "নিজের মেস খুলুন",
+  "@demoBannerAction": {
+    "description": "Discards the demo mess and starts a real one."
+  },
+  "emptyTodayTitle": "আজ কোনো পরিবর্তন নেই",
+  "@emptyTodayTitle": {
+    "description": "Today tab empty state. A success, not an absence."
+  },
+  "emptyGridTitle": "এই মাসে এখনো কিছু নেই",
+  "@emptyGridTitle": {
+    "description": "Khata grid empty state."
+  },
+  "emptyGridAction": "আজ দেখুন",
+  "@emptyGridAction": {
+    "description": "The one action on the empty grid."
+  },
+  "emptyAccountsTitle": "এখনো কোনো বাজার বা জমা নেই",
+  "@emptyAccountsTitle": {
+    "description": "Accounts tab empty state."
+  },
+  "emptyAccountsAction": "+ বাজার যোগ করুন",
+  "@emptyAccountsAction": {
+    "description": "The one action on empty accounts."
+  },
+  "emptyMembersTitle": "আপনি একাই আছেন",
+  "@emptyMembersTitle": {
+    "description": "Members empty state. Solo is a supported way to run a mess, not a failure."
+  },
+  "emptyMembersAction": "সদস্য যোগ করুন",
+  "@emptyMembersAction": {
+    "description": "The one action on empty members."
   }
 }

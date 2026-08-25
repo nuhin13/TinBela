@@ -127,6 +127,192 @@ abstract class AppLocalizations {
   /// In bn, this message translates to:
   /// **'আরও'**
   String get navMore;
+
+  /// Retry button on an error state. Short — it sits in a 48dp pill.
+  ///
+  /// In bn, this message translates to:
+  /// **'আবার চেষ্টা করুন'**
+  String get retry;
+
+  /// Fallback error headline when the server sent no message of its own.
+  ///
+  /// In bn, this message translates to:
+  /// **'কিছু একটা ভুল হয়েছে'**
+  String get errorGeneric;
+
+  /// Shown when the request never reached the server. Mess wifi is bad; blame the network, not the user.
+  ///
+  /// In bn, this message translates to:
+  /// **'ইন্টারনেট সংযোগ নেই'**
+  String get errorOffline;
+
+  /// Support reference. The user reads this out; it is never translated.
+  ///
+  /// In bn, this message translates to:
+  /// **'সমস্যার কোড: {id}'**
+  String errorRequestId(String id);
+
+  /// The empty state that means FINISHED, not blank. A zero-exception day is a success, not an absence.
+  ///
+  /// In bn, this message translates to:
+  /// **'কিছু করার নেই'**
+  String get nothingToDo;
+
+  /// Second line of the finished-day state. Product rule: do not soften or remove.
+  ///
+  /// In bn, this message translates to:
+  /// **'বাকি সবাই ডিফল্ট প্যাটার্নে ✓'**
+  String get allOnDefault;
+
+  /// Welcome screen tagline, line 1. From prototype frame 1a.
+  ///
+  /// In bn, this message translates to:
+  /// **'তিনবেলার হিসাব, এক অ্যাপে।'**
+  String get brandTagline;
+
+  /// Welcome screen tagline, line 2.
+  ///
+  /// In bn, this message translates to:
+  /// **'মেস চালান ঝামেলা ছাড়া — দিনে ১ মিনিট।'**
+  String get brandSubtitle;
+
+  /// Primary button on the welcome screen.
+  ///
+  /// In bn, this message translates to:
+  /// **'শুরু করুন'**
+  String get getStarted;
+
+  /// Language choice on the welcome screen. bn is the default.
+  ///
+  /// In bn, this message translates to:
+  /// **'বাংলা'**
+  String get languageBangla;
+
+  /// Language choice on the welcome screen. Never translated — it names itself.
+  ///
+  /// In bn, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// Explainer card heading. Prototype frame 1c.
+  ///
+  /// In bn, this message translates to:
+  /// **'💡 তিনবেলা যেভাবে কাজ করে'**
+  String get howItWorksTitle;
+
+  /// Explainer body. This is the product in three lines; do not shorten.
+  ///
+  /// In bn, this message translates to:
+  /// **'প্রত্যেকের একটা ডিফল্ট প্যাটার্ন থাকে। স্বাভাবিক দিনে কেউ কিছু করে না — শুধু ব্যতিক্রম (অফ / গেস্ট) হলে ১ ট্যাপ। বাকিটা অ্যাপ হিসাব করে।'**
+  String get howItWorksBody;
+
+  /// Button that leaves the explainer for mess setup.
+  ///
+  /// In bn, this message translates to:
+  /// **'মেস তৈরি করুন →'**
+  String get createMess;
+
+  /// Skips the explainer. Task 09.4 requires it be skippable.
+  ///
+  /// In bn, this message translates to:
+  /// **'এড়িয়ে যান'**
+  String get skip;
+
+  /// Headline after a mess is created.
+  ///
+  /// In bn, this message translates to:
+  /// **'মেস তৈরি হয়েছে 🎉'**
+  String get messCreated;
+
+  /// Label above the invite link.
+  ///
+  /// In bn, this message translates to:
+  /// **'সদস্যদের এই লিংক পাঠান'**
+  String get inviteLinkLabel;
+
+  /// Copies the invite link.
+  ///
+  /// In bn, this message translates to:
+  /// **'কপি'**
+  String get copy;
+
+  /// Toast after copying. Confirmation is a toast, never a dialog.
+  ///
+  /// In bn, this message translates to:
+  /// **'লিংক কপি হয়েছে'**
+  String get copied;
+
+  /// Share target. A brand name — never translated.
+  ///
+  /// In bn, this message translates to:
+  /// **'WhatsApp'**
+  String get shareWhatsApp;
+
+  /// Share target. A brand name — never translated.
+  ///
+  /// In bn, this message translates to:
+  /// **'Messenger'**
+  String get shareMessenger;
+
+  /// Demo mess banner heading. Prototype frame 2.
+  ///
+  /// In bn, this message translates to:
+  /// **'👋 এটি একটি ডেমো মেস'**
+  String get demoBannerTitle;
+
+  /// Demo banner body. Poke-safe is the promise; keep it.
+  ///
+  /// In bn, this message translates to:
+  /// **'যেকোনো জায়গায় চাপ দিয়ে দেখুন — কিছুই ভাঙবে না। প্রস্তুত হলে নিজের মেস খুলুন।'**
+  String get demoBannerBody;
+
+  /// Discards the demo mess and starts a real one.
+  ///
+  /// In bn, this message translates to:
+  /// **'নিজের মেস খুলুন'**
+  String get demoBannerAction;
+
+  /// Today tab empty state. A success, not an absence.
+  ///
+  /// In bn, this message translates to:
+  /// **'আজ কোনো পরিবর্তন নেই'**
+  String get emptyTodayTitle;
+
+  /// Khata grid empty state.
+  ///
+  /// In bn, this message translates to:
+  /// **'এই মাসে এখনো কিছু নেই'**
+  String get emptyGridTitle;
+
+  /// The one action on the empty grid.
+  ///
+  /// In bn, this message translates to:
+  /// **'আজ দেখুন'**
+  String get emptyGridAction;
+
+  /// Accounts tab empty state.
+  ///
+  /// In bn, this message translates to:
+  /// **'এখনো কোনো বাজার বা জমা নেই'**
+  String get emptyAccountsTitle;
+
+  /// The one action on empty accounts.
+  ///
+  /// In bn, this message translates to:
+  /// **'+ বাজার যোগ করুন'**
+  String get emptyAccountsAction;
+
+  /// Members empty state. Solo is a supported way to run a mess, not a failure.
+  ///
+  /// In bn, this message translates to:
+  /// **'আপনি একাই আছেন'**
+  String get emptyMembersTitle;
+
+  /// The one action on empty members.
+  ///
+  /// In bn, this message translates to:
+  /// **'সদস্য যোগ করুন'**
+  String get emptyMembersAction;
 }
 
 class _AppLocalizationsDelegate

@@ -22,6 +22,20 @@ dependencies:
   protobuf: ^6.0.0
   fixnum: ^1.1.1
 
+  # The language choice on the welcome screen has to survive a restart, and
+  # it is made before any account exists, so there is nowhere on the server
+  # to keep it yet (task 09.1).
+  shared_preferences: ^2.3.0
+
+  # Messenger/WhatsApp deep links on the invite screen (task 09.5). No NDK:
+  # this plugin is Kotlin, not native sources — see android/app/build.gradle.kts.
+  url_launcher: ^6.3.0
+
+  # Transport for the generated messages above. Connect's unary JSON protocol
+  # is a POST with a JSON body, so this is the whole dependency -- see
+  # core/api/connect_client.dart.
+  http: ^1.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
