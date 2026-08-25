@@ -73,10 +73,11 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 ## Day 3 — Contracts
 
 ### EPIC 03 — Contracts & transport · *gate: TS + Dart clients round-trip*
-> **Gate NOT met.** Go client round-trips (`make contract`). TypeScript has no
-> test runner; Dart is blocked on Flutter being uninstallable. `buf breaking`
-> also fails once against master on the new `go_package` options — expected,
-> and it goes quiet on merge. See `docs/eng/transport.md`.
+> **Gate MET 2026-08-25.** `make contract-live` boots the stack and drives
+> both generated clients against the real binary; both also have stackless
+> tests fed bytes captured from it. `buf breaking` still fails once against
+> master on the new `go_package` options — expected, goes quiet on merge.
+> See `docs/eng/transport.md`.
 - [x] 03.1 buf workspace + breaking checks
 - [x] 03.2 Proto packages
 - [x] 03.3 ★ Common types (`Money`, `Date`, `MathExplain`)
@@ -94,13 +95,20 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 ## Days 4–14 — Build
 
 ### EPIC 04 — Identity & tenancy · *gate: mess + 7 members + 7 links*
-- [ ] 04.1 Firebase token verification
-- [ ] 04.2 `CreateSession` / `GetMe`
-- [ ] 04.3 `CreateMess` atomically
-- [ ] 04.4 `AddMember` + invite token
+- [x] 04.1 Firebase token verification — RS256 + claim policy + cert cache,
+      built on stdlib crypto rather than the Admin SDK (whose key source is
+      not injectable, so the signature path could not be tested). Needs only
+      `FIREBASE_PROJECT_ID`. **Not yet exercised with a token Google minted.**
+- [~] 04.2 `CreateSession` / `GetMe` — GetMe done. **`CreateSession` is not
+      in the proto at all**, and `Mess` carries no `role` field, so "returns
+      user + tenants + role" needs a proto change. Awaiting approval
+- [x] 04.3 `CreateMess` atomically
+- [x] 04.4 `AddMember` + invite token
 - [ ] 04.5 ★ Invite token entropy + revocation
 - [ ] 04.6 ★ Phone matching, no duplicates
-- [ ] 04.7 Role checks at the interceptor
+- [x] 04.7 Role checks at the interceptor — fail-closed procedure map;
+      unlisted procedures are manager-only. Proved end to end: a MEMBER gets
+      permission_denied on AddLedgerEntry where a MANAGER reaches the stub
 - [ ] 04.8 Soft leave
 - [ ] 04.9 ★ Account deletion policy
 
@@ -139,25 +147,30 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [ ] 07.8 `GetStatement`
 
 ### EPIC 08 — Flutter foundation · *gate: signed-in shell, 4 tabs, Bangla, real device*
-- [ ] 08.1 Project + flavors
-- [ ] 08.2 Theme from tokens
-- [ ] 08.3 ★ ARB bn + en
+- [x] 08.1 Project + flavors — builds a debug APK; flavors still to add
+- [x] 08.2 Theme from tokens
+- [x] 08.3 ★ ARB bn + en
 - [ ] 08.4 ★ Bangla numerals + `MoneyText`
-- [ ] 08.5 Generated Dart client
-- [ ] 08.6 State + repository layer
-- [ ] 08.7 Bottom nav shell
-- [ ] 08.8 Error/loading/empty primitives
+- [x] 08.5 Generated Dart client — HTTP/JSON over Connect's codec; round-trips GetMe live
+- [x] 08.6 State + repository layer — interfaces + remote impls; domain
+      types in core/domain, mapping isolated to core/data. P6 offline lands
+      as a cache decorator, not an `if` in every screen
+- [x] 08.7 Bottom nav shell — verified on a real device (CPH2745, Android 16)
+- [x] 08.8 Error/loading/empty primitives — skeleton, retry, toast,
+      FinishedState. Retry suppressed on non-retryable codes; the server's
+      localised message is rendered rather than re-invented
 - [ ] 08.9 Google Sign-In
 
 ### EPIC 09 — Onboarding · *gate: stranger → usable Today screen in <90s*
-- [ ] 09.1 Splash + language
+- [x] 09.1 Splash + language — bn default, persisted in shared_preferences pre-auth
 - [ ] 09.2 Sign-in
 - [ ] 09.3 ★ 3-question setup — **no fourth question, ever**
-- [ ] 09.4 How-it-works card
-- [ ] 09.5 Invite link + Messenger share
+- [x] 09.4 How-it-works card — skippable
+- [x] 09.5 Invite link + Messenger share — Messenger first, clipboard
+      fallback when neither app is installed
 - [ ] 09.6 ★ Solo-manager path
-- [ ] 09.7 Demo mess
-- [ ] 09.8 Empty states
+- [x] 09.7 Demo mess — banner + one-tap discard (local seeding still to wire)
+- [x] 09.8 Empty states — খাতা · হিসাব · সদস্য, one action each. আজ is 10.3 ★
 
 ### EPIC 10 — Daily loop ★ · *gate: tap-count audit ≤6 taps on a real device*
 - [ ] 10.1 ★ Cutoff card
