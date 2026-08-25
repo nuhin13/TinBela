@@ -2,6 +2,8 @@ package transport
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -32,10 +34,25 @@ func NewRepo(pool *pgxpool.Pool) interface {
 func (r repo) ByFirebaseUID(ctx context.Context, firebaseUID string) (Caller, error) {
 	u, err := db.New(r.pool).GetUserByFirebaseUID(ctx, &firebaseUID)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// No account yet. Normal on first sign-in.
 			return Caller{}, core.ErrNotFound
 		}
-		return Caller{}, core.ErrNotFound
+		// Anything else is a database fault, and it must NOT be reported as
+		// "no such user". Doing so tells the caller "sign in again" for a
+		// problem no amount of signing in can fix, and hides the fault
+		// entirely: authInterceptor turns ErrNotFound into unauthenticated
+		// without logging a cause.
+		//
+		// This is not hypothetical. After `migrate` down/up recreates the
+		// tables, pooled connections hold cached statement plans for the old
+		// ones; every call then failed as `unauthenticated` until the process
+		// was restarted, with nothing in the logs to say why.
+		//
+		// Wrapping instead lets errorMappingInterceptor map it to `internal`
+		// AND log the original cause -- which is the only place the cause
+		// survives. The client still never sees a pgx error.
+		return Caller{}, fmt.Errorf("look up user by firebase uid: %w", err)
 	}
 	return Caller{
 		UserID:      u.ID,
