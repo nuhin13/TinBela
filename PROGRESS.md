@@ -262,7 +262,10 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [ ] 18.1 ★ Smoke test script
 - [ ] 18.2 Load test p95 <300ms
 - [ ] 18.3 ★ Security pass
-- [ ] 18.4 Dependency + secret scanning
+- [x] 18.4 Dependency + secret scanning — gitleaks, govulncheck, pnpm audit;
+      push/PR/nightly. Fixed 5 real advisories in apps/web via pnpm overrides.
+      **2 Go findings blocked on a Go 1.23 -> 1.25 toolchain bump** (pgx SQL
+      injection, x/text infinite loop) — recorded in harness/vuln-allowlist.txt
 - [ ] 18.5 ★ **Backup + RESTORE DRILL**
 - [ ] 18.6 ★ Bangla copy read aloud by a native speaker
 - [ ] 18.7 130% text scale, no clipping
