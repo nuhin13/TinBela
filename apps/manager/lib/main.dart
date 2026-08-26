@@ -11,11 +11,13 @@
 // token, so the whole onboarding flow runs against the real API before
 // Firebase exists (task 09.2).
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'app.dart';
 import 'core/api/connect_client.dart';
 import 'core/auth/auth_session.dart';
+import 'core/auth/firebase_auth_backend.dart';
 import 'core/config/app_config.dart';
 import 'core/data/repositories.dart';
 import 'core/settings/locale_store.dart';
@@ -26,14 +28,18 @@ Future<void> main() async {
   final config = AppConfig.fromEnvironment();
   final localeStore = await LocaleStore.open();
 
-  // Task 08.9: the session owns the token and its refresh. Dev signs in as the
-  // seeded manager; prod has no sign-in until Firebase lands (task 09.2), so it
-  // runs tokenless and the server answers `unauthenticated` → onboarding.
-  final auth = AuthSession(
-    config.isDev
-        ? DevAuthBackend(config.devFirebaseUid)
-        : const UnauthenticatedBackend(),
-  );
+  // Task 08.9 + 09.2: the session owns the token, its refresh, and sign-in.
+  // Dev signs in as the seeded manager and touches no Firebase, so a dev build
+  // needs no google-services.json. Prod signs in with Google via Firebase,
+  // which reads google-services.json (supplied at build time, never committed).
+  final AuthBackend backend;
+  if (config.isDev) {
+    backend = DevAuthBackend(config.devFirebaseUid);
+  } else {
+    await Firebase.initializeApp();
+    backend = FirebaseAuthBackend();
+  }
+  final auth = AuthSession(backend);
 
   // ConnectClient still just asks for a token per call and, on a 401, asks the
   // session to refresh and retries once -- the seam was always this shape.
@@ -48,5 +54,6 @@ Future<void> main() async {
     localeController: LocaleController(localeStore),
     session: RemoteSessionRepository(client),
     messes: RemoteMessesRepository(client),
+    onSignIn: auth.signIn,
   ));
 }

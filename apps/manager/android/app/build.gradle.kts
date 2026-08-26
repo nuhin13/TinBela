@@ -4,6 +4,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase (task 09.2) only in builds that carry a google-services.json. A dev
+// build has none — it signs in through DevAuthBackend and never initialises
+// Firebase — so applying the processor unconditionally would break `flutter run`.
+// Drop the prod google-services.json into android/app/ (it is gitignored) to
+// switch Google Sign-In on.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.droidbuilder.tinbela_manager"
     compileSdk = flutter.compileSdkVersion

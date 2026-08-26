@@ -36,6 +36,16 @@ dependencies:
   # core/api/connect_client.dart.
   http: ^1.2.0
 
+  # Manager sign-in (ADR-0009, task 09.2): Google Sign-In, exchanged for a
+  # Firebase ID token. firebase_core initialises the SDK from google-services.json
+  # (prod only — dev uses DevAuthBackend and initialises no Firebase). The entire
+  # plugin surface is isolated in core/auth/firebase_auth_backend.dart, which is
+  # why google_sign_in is pinned to 6.x for its stable signIn() API. These pull
+  # native Android sources; run `flutter pub get` to resolve and lock.
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  google_sign_in: ^6.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

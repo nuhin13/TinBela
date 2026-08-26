@@ -34,9 +34,15 @@ class AuthToken {
 /// has been asked for -- the app has not yet learned who, if anyone, is here.
 enum AuthStatus { unknown, signedIn, signedOut }
 
-/// The token source. One implementation in v1.0 dev (`dev:<uid>`); task 09.2
-/// adds the Firebase one; prod runs [UnauthenticatedBackend] until it does.
+/// The token source. Dev uses [DevAuthBackend] (`dev:<uid>`); prod uses the
+/// Firebase one (core/auth/firebase_auth_backend.dart, task 09.2).
+/// [UnauthenticatedBackend] is the no-one-signed-in fallback.
 abstract interface class AuthBackend {
+  /// Runs the interactive sign-in (task 09.2: the Google account picker) and
+  /// returns the resulting token, or null when the user backs out. Only the
+  /// sign-in screen calls this; every later call goes through [issueToken].
+  Future<AuthToken?> signIn();
+
   /// A currently-valid token, or null when no one is signed in.
   ///
   /// [forceRefresh] must bypass any backend-side cache -- it maps directly to
@@ -90,6 +96,15 @@ class AuthSession {
     return _mint(forceRefresh: cached != null);
   }
 
+  /// Runs interactive sign-in and reports whether someone is now signed in.
+  /// The sign-in screen (task 09.2) calls this and, on true, re-runs GetMe.
+  Future<bool> signIn() async {
+    final token = await _backend.signIn();
+    _cached = token;
+    _status.value = token == null ? AuthStatus.signedOut : AuthStatus.signedIn;
+    return token != null;
+  }
+
   /// Forces a new token regardless of the cache, returning whether one was
   /// obtained. ConnectClient calls this on a 401 and retries once when true.
   Future<bool> refresh() async => (await _mint(forceRefresh: true)) != null;
@@ -133,6 +148,13 @@ class DevAuthBackend implements AuthBackend {
   bool _signedOut = false;
 
   @override
+  Future<AuthToken?> signIn() async {
+    // No account picker in dev -- the seeded manager is already "signed in".
+    _signedOut = false;
+    return issueToken();
+  }
+
+  @override
   Future<AuthToken?> issueToken({bool forceRefresh = false}) async {
     if (_signedOut) return null;
     return AuthToken('dev:$_uid', _clock().add(_ttl));
@@ -142,12 +164,15 @@ class DevAuthBackend implements AuthBackend {
   Future<void> signOut() async => _signedOut = true;
 }
 
-/// Prod backend until task 09.2 wires Firebase: nobody is signed in, so every
-/// call goes out tokenless and the server answers `unauthenticated`. This is
-/// the same behaviour the app shipped with before this task -- a release build
-/// simply has no sign-in yet.
+/// The no-one-signed-in backend: every call goes out tokenless and the server
+/// answers `unauthenticated` → onboarding. Prod signs in with Firebase now
+/// (task 09.2); this remains as the honest "no auth configured" fallback and
+/// for tests.
 class UnauthenticatedBackend implements AuthBackend {
   const UnauthenticatedBackend();
+
+  @override
+  Future<AuthToken?> signIn() async => null;
 
   @override
   Future<AuthToken?> issueToken({bool forceRefresh = false}) async => null;

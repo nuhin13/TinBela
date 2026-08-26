@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The only permission the app needs: it talks to the API and to Firebase
+         over the network. Deliberately NOT READ_SMS — sign-in is Google, not
+         phone+OTP (ADR-0009), so there is no SMS to read and no Play permissions
+         review to trigger (task 19.7). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="tinbela_manager"
         android:name="${applicationName}"

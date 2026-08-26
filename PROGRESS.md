@@ -168,7 +168,15 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 
 ### EPIC 09 — Onboarding · *gate: stranger → usable Today screen in <90s*
 - [x] 09.1 Splash + language — bn default, persisted in shared_preferences pre-auth
-- [ ] 09.2 Sign-in
+- [~] 09.2 Sign-in — Google Sign-In via Firebase (ADR-0009), one tap, no OTP,
+      no READ_SMS. `FirebaseAuthBackend` fills the 08.9 `AuthBackend` seam;
+      `SignInScreen` sits between welcome and mess setup and, on success,
+      re-checks GetMe so a reinstalling manager lands in their mess instead of
+      re-creating it. Gradle applies google-services only when
+      `google-services.json` is present, so dev builds (DevAuthBackend, no
+      Firebase) still compile. **NOT verified here:** no Flutter SDK to
+      `pub get`/build, and prod needs a real `google-services.json` + the
+      SHA-1 in the Firebase console. Screen logic tested in `onboarding_test`.
 - [ ] 09.3 ★ 3-question setup — **no fourth question, ever**
 - [x] 09.4 How-it-works card — skippable
 - [x] 09.5 Invite link + Messenger share — Messenger first, clipboard

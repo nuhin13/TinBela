@@ -55,6 +55,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getStarted => 'Get started';
 
   @override
+  String get signInPrompt => 'Sign in to get started';
+
+  @override
+  String get signInWithGoogle => 'Sign in with Google';
+
+  @override
+  String get signInReassure => 'One tap — no OTP, no password.';
+
+  @override
+  String get signInFailed => "Sign-in didn't complete. Try again.";
+
+  @override
   String get languageBangla => 'বাংলা';
 
   @override

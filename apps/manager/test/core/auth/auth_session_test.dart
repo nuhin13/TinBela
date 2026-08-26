@@ -54,6 +54,24 @@ void main() {
     expect(backend.lastForceRefresh, isTrue);
   });
 
+  test('signIn runs the backend and reports signed in', () async {
+    expect(await session.signIn(), isTrue);
+    expect(backend.signIns, 1);
+    expect(session.status.value, AuthStatus.signedIn);
+    // The token it minted is served without a second backend round-trip.
+    expect(await session.token(), 'token#1');
+    expect(backend.issued, 1);
+  });
+
+  test('signIn after signOut signs back in', () async {
+    await session.signIn();
+    await session.signOut();
+    expect(session.status.value, AuthStatus.signedOut);
+
+    expect(await session.signIn(), isTrue);
+    expect(session.status.value, AuthStatus.signedIn);
+  });
+
   test('signOut drops the token and goes tokenless', () async {
     await session.token();
     await session.signOut();
@@ -87,6 +105,21 @@ void main() {
       await backend.signOut();
       expect(await backend.issueToken(), isNull);
     });
+
+    test('signIn re-enables a signed-out dev backend', () async {
+      final backend = DevAuthBackend('dev-x');
+      await backend.signOut();
+      expect(await backend.signIn(), isNotNull);
+      expect(await backend.issueToken(), isNotNull);
+    });
+  });
+
+  group('UnauthenticatedBackend', () {
+    test('cannot sign in — the no-auth fallback stays signed out', () async {
+      const backend = UnauthenticatedBackend();
+      expect(await backend.signIn(), isNull);
+      expect(await backend.issueToken(), isNull);
+    });
   });
 }
 
@@ -109,8 +142,16 @@ class _FakeBackend implements AuthBackend {
   final Duration _ttl;
 
   int issued = 0;
+  int signIns = 0;
   bool signedOut = false;
   bool? lastForceRefresh;
+
+  @override
+  Future<AuthToken?> signIn() async {
+    signIns += 1;
+    signedOut = false;
+    return issueToken();
+  }
 
   @override
   Future<AuthToken?> issueToken({bool forceRefresh = false}) async {

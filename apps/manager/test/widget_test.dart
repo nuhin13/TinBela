@@ -58,6 +58,7 @@ Future<Widget> _app(Object sessionResult) async {
     localeController: LocaleController(store),
     session: _FakeSession(sessionResult),
     messes: _FakeMesses(),
+    onSignIn: () async => true,
   );
 }
 
