@@ -253,12 +253,21 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 
 ### EPIC 15 — Landing · *gate: privacy page matches data safety form*
 - [ ] 15.1 ★ Home — one idea
-- [ ] 15.2 Tap comparison graphic
-- [ ] 15.3 Screenshots + Play badge
+- [x] 15.2 Tap comparison graphic — `TapComparison`: khata ৩/দিন · other apps
+      ৩/দিন · TinBela **০/দিন** (highlighted, "কিছু করার নেই"). The zero is the
+      differentiator. Token colours, bn numerals, accessible marks.
+- [x] 15.3 Screenshots + Play badge — `AppShowcase`: a built Today-screen mock
+      (finished-day state, no binary asset — real captures are 19.4) + a Play
+      CTA. Official Play badge art ships with the listing (19.x).
 - [ ] 15.4 ★ `/privacy`
 - [ ] 15.5 ★ `/terms`
 - [ ] 15.6 ★ `/delete-account`
-- [ ] 15.7 SEO + OG images
+- [~] 15.7 SEO + OG images — full metadata (title template, canonical, robots,
+      openGraph bn_BD, twitter card, metadataBase) + a generated
+      `opengraph-image.tsx` rendering the brand + tagline in Hind Siliguri
+      (visually verified — Bangla conjuncts correct). Messenger preview done.
+      **NOT done:** bn/en locale routing — the site is bn-only; en routing is a
+      larger i18n lift beyond the Messenger-preview done-when. Flagged.
 
 ### EPIC 16 — Admin portal · *gate: answer "what did mess X do Tuesday" in 30s*
 > **Start on Day 5.** Without Django admin this is your only window into the
