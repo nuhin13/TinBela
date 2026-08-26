@@ -14,6 +14,8 @@ localised messages. A user never sees a stack trace or a database error.
 | `ErrNoMeals` | `failed_precondition` | কোনো মিল নেই, মাস শেষ করা যাবে না | No meals recorded — cannot close |
 | `ErrInvalidToken` | `unauthenticated` | লিংকটি আর কাজ করছে না | This link is no longer valid |
 | `ErrAlreadyVoided` | `failed_precondition` | এটি আগেই বাতিল হয়েছে | Already voided |
+| `ErrAlreadyLeft` | `failed_precondition` | এই সদস্য আগেই মেস ছেড়েছেন | This member has already left |
+| `ErrCannotLeaveManager` | `failed_precondition` | ম্যানেজারকে এভাবে সরানো যায় না | The manager cannot be removed this way |
 | `ErrTenantMismatch` | `permission_denied` | *(generic)* | Not found |
 
 ## Rules

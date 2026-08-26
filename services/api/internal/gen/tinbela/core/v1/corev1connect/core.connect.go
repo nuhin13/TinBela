@@ -41,6 +41,8 @@ const (
 	CoreServiceAddMemberProcedure = "/tinbela.core.v1.CoreService/AddMember"
 	// CoreServiceListMembersProcedure is the fully-qualified name of the CoreService's ListMembers RPC.
 	CoreServiceListMembersProcedure = "/tinbela.core.v1.CoreService/ListMembers"
+	// CoreServiceLeaveMemberProcedure is the fully-qualified name of the CoreService's LeaveMember RPC.
+	CoreServiceLeaveMemberProcedure = "/tinbela.core.v1.CoreService/LeaveMember"
 )
 
 // CoreServiceClient is a client for the tinbela.core.v1.CoreService service.
@@ -49,6 +51,7 @@ type CoreServiceClient interface {
 	CreateMess(context.Context, *connect.Request[v1.CreateMessRequest]) (*connect.Response[v1.CreateMessResponse], error)
 	AddMember(context.Context, *connect.Request[v1.AddMemberRequest]) (*connect.Response[v1.AddMemberResponse], error)
 	ListMembers(context.Context, *connect.Request[v1.ListMembersRequest]) (*connect.Response[v1.ListMembersResponse], error)
+	LeaveMember(context.Context, *connect.Request[v1.LeaveMemberRequest]) (*connect.Response[v1.LeaveMemberResponse], error)
 }
 
 // NewCoreServiceClient constructs a client for the tinbela.core.v1.CoreService service. By default,
@@ -86,6 +89,12 @@ func NewCoreServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(coreServiceMethods.ByName("ListMembers")),
 			connect.WithClientOptions(opts...),
 		),
+		leaveMember: connect.NewClient[v1.LeaveMemberRequest, v1.LeaveMemberResponse](
+			httpClient,
+			baseURL+CoreServiceLeaveMemberProcedure,
+			connect.WithSchema(coreServiceMethods.ByName("LeaveMember")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -95,6 +104,7 @@ type coreServiceClient struct {
 	createMess  *connect.Client[v1.CreateMessRequest, v1.CreateMessResponse]
 	addMember   *connect.Client[v1.AddMemberRequest, v1.AddMemberResponse]
 	listMembers *connect.Client[v1.ListMembersRequest, v1.ListMembersResponse]
+	leaveMember *connect.Client[v1.LeaveMemberRequest, v1.LeaveMemberResponse]
 }
 
 // GetMe calls tinbela.core.v1.CoreService.GetMe.
@@ -117,12 +127,18 @@ func (c *coreServiceClient) ListMembers(ctx context.Context, req *connect.Reques
 	return c.listMembers.CallUnary(ctx, req)
 }
 
+// LeaveMember calls tinbela.core.v1.CoreService.LeaveMember.
+func (c *coreServiceClient) LeaveMember(ctx context.Context, req *connect.Request[v1.LeaveMemberRequest]) (*connect.Response[v1.LeaveMemberResponse], error) {
+	return c.leaveMember.CallUnary(ctx, req)
+}
+
 // CoreServiceHandler is an implementation of the tinbela.core.v1.CoreService service.
 type CoreServiceHandler interface {
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 	CreateMess(context.Context, *connect.Request[v1.CreateMessRequest]) (*connect.Response[v1.CreateMessResponse], error)
 	AddMember(context.Context, *connect.Request[v1.AddMemberRequest]) (*connect.Response[v1.AddMemberResponse], error)
 	ListMembers(context.Context, *connect.Request[v1.ListMembersRequest]) (*connect.Response[v1.ListMembersResponse], error)
+	LeaveMember(context.Context, *connect.Request[v1.LeaveMemberRequest]) (*connect.Response[v1.LeaveMemberResponse], error)
 }
 
 // NewCoreServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -156,6 +172,12 @@ func NewCoreServiceHandler(svc CoreServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(coreServiceMethods.ByName("ListMembers")),
 		connect.WithHandlerOptions(opts...),
 	)
+	coreServiceLeaveMemberHandler := connect.NewUnaryHandler(
+		CoreServiceLeaveMemberProcedure,
+		svc.LeaveMember,
+		connect.WithSchema(coreServiceMethods.ByName("LeaveMember")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/tinbela.core.v1.CoreService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CoreServiceGetMeProcedure:
@@ -166,6 +188,8 @@ func NewCoreServiceHandler(svc CoreServiceHandler, opts ...connect.HandlerOption
 			coreServiceAddMemberHandler.ServeHTTP(w, r)
 		case CoreServiceListMembersProcedure:
 			coreServiceListMembersHandler.ServeHTTP(w, r)
+		case CoreServiceLeaveMemberProcedure:
+			coreServiceLeaveMemberHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -189,4 +213,8 @@ func (UnimplementedCoreServiceHandler) AddMember(context.Context, *connect.Reque
 
 func (UnimplementedCoreServiceHandler) ListMembers(context.Context, *connect.Request[v1.ListMembersRequest]) (*connect.Response[v1.ListMembersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("tinbela.core.v1.CoreService.ListMembers is not implemented"))
+}
+
+func (UnimplementedCoreServiceHandler) LeaveMember(context.Context, *connect.Request[v1.LeaveMemberRequest]) (*connect.Response[v1.LeaveMemberResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("tinbela.core.v1.CoreService.LeaveMember is not implemented"))
 }

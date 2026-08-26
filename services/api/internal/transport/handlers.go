@@ -9,6 +9,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -295,6 +296,73 @@ func (s coreService) ListMembers(ctx context.Context, req *connect.Request[corev
 	return connect.NewResponse(out), nil
 }
 
+// LeaveMember marks a member gone as of today (Asia/Dhaka). It is a SOFT
+// leave: left_at is set, nothing is deleted, and every meal the member ate
+// while present still counts (property P8, task 04.8). Their meal_exceptions
+// and ledger rows are untouched, so a closed month's numbers cannot change
+// under them.
+//
+// It is manager-only by the fail-closed interceptor (task 04.7); requireManager
+// re-checks in the same defence-in-depth spirit as the other writes.
+func (s coreService) LeaveMember(ctx context.Context, req *connect.Request[corev1.LeaveMemberRequest]) (*connect.Response[corev1.LeaveMemberResponse], error) {
+	scope, err := requireManager(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := sameMess(req.Msg.GetMessId(), scope); err != nil {
+		return nil, err
+	}
+	memberID, err := uuid.Parse(req.Msg.GetMemberId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("member_id is not a valid id"))
+	}
+	tx, ok := TxFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+	q := db.New(tx)
+
+	// Look the row up first, under tenant scope: it separates "no such member
+	// here" from "already left", and it is where the manager guard reads the
+	// target's role. RLS makes a member of another mess indistinguishable from
+	// one that does not exist -- both are ErrNotFound.
+	existing, err := q.GetMembership(ctx, db.GetMembershipParams{
+		TenantID: scope.TenantID, ID: memberID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, core.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if existing.Role == roleManager {
+		// Removing the mess's manager would orphan it, and v1.0 has no
+		// hand-off. A manager leaving is account deletion (Epic 13), not this.
+		return nil, core.ErrCannotLeaveManager
+	}
+	if existing.LeftAt.Valid {
+		return nil, core.ErrAlreadyLeft
+	}
+
+	m, err := q.LeaveMembership(ctx, db.LeaveMembershipParams{
+		TenantID: scope.TenantID, ID: memberID, LeftAt: pgDate(todayDhaka()),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&corev1.LeaveMemberResponse{
+		Member: &corev1.Member{
+			Id:          m.ID.String(),
+			DisplayName: m.DisplayName,
+			Role:        protoRole(m.Role),
+			JoinedAt:    protoDate(m.JoinedAt),
+			LeftAt:      protoDate(m.LeftAt),
+		},
+	}), nil
+}
+
 // requireManager returns the authorised scope, and re-checks the role.
 //
 // roleInterceptor (task 04.7) is the primary gate and rejects a MEMBER before
@@ -366,6 +434,28 @@ func currentMonth() (time.Time, time.Time) {
 	now := time.Now().In(loc)
 	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
 	return start, start.AddDate(0, 1, -1)
+}
+
+// todayDhaka is the current calendar day in Asia/Dhaka (Invariant 5). A leave
+// date is a day, not an instant, and it is the server's to decide -- a manager
+// on a trip does not move when their member left.
+func todayDhaka() time.Time {
+	loc, err := time.LoadLocation("Asia/Dhaka")
+	if err != nil {
+		loc = time.UTC
+	}
+	now := time.Now().In(loc)
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+}
+
+// protoDate renders a nullable Postgres date as the contract's Date
+// ("YYYY-MM-DD"), or nil when the column is NULL -- a member who has not left
+// carries no left_at.
+func protoDate(d pgtype.Date) *corev1.Date {
+	if !d.Valid {
+		return nil
+	}
+	return &corev1.Date{Value: d.Time.Format("2006-01-02")}
 }
 
 // pgTime converts "HH:MM" to Postgres time-of-day. Cutoffs are wall-clock

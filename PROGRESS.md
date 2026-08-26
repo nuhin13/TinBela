@@ -109,7 +109,17 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [x] 04.7 Role checks at the interceptor — fail-closed procedure map;
       unlisted procedures are manager-only. Proved end to end: a MEMBER gets
       permission_denied on AddLedgerEntry where a MANAGER reaches the stub
-- [ ] 04.8 Soft leave
+- [x] 04.8 Soft leave — `LeaveMember` RPC sets `left_at` (today, Asia/Dhaka)
+      via UPDATE; never deletes, so prior `meal_exceptions` still count (the
+      API half of P8 — the engine half is 02.3 ★). Manager-only (fail-closed
+      interceptor), refuses to remove the manager or a member who already
+      left, and is tenant-scoped. Verified against a real Postgres:
+      `leave_member_test.go` (leave, prior-meals-preserved, double-leave,
+      not-found, manager-guard, two-tenant isolation) all green, plus the
+      full `go test ./...`, `golangci-lint`, `buf lint`, and `buf breaking`.
+      **Note:** TS/Dart clients regenerate on the next full `make proto` (buf's
+      remote plugins are unreachable from this container); the RPC is additive
+      so nothing breaks meanwhile.
 - [ ] 04.9 ★ Account deletion policy
 
 ### EPIC 05 — Meal service · *gate: 30-day scenario matches hand-computed sheet*

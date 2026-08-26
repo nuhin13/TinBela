@@ -95,9 +95,21 @@ message AddMemberResponse {
 message ListMembersRequest { string mess_id = 1; }
 message ListMembersResponse { repeated Member members = 1; }
 
+// Soft leave (task 04.8): the member stops counting from left_at forward, but
+// every meal up to it still counts. There is no hard delete — the tenure
+// boundary is a date on the row, never a removed row (property P8).
+message LeaveMemberRequest {
+  string mess_id = 1;
+  string member_id = 2;
+}
+message LeaveMemberResponse {
+  Member member = 1;  // carries left_at, now set
+}
+
 service CoreService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
   rpc CreateMess(CreateMessRequest) returns (CreateMessResponse);
   rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
   rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+  rpc LeaveMember(LeaveMemberRequest) returns (LeaveMemberResponse);
 }
