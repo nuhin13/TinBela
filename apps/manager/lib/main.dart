@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 
 import 'app.dart';
 import 'core/api/connect_client.dart';
+import 'core/auth/auth_session.dart';
 import 'core/config/app_config.dart';
 import 'core/data/repositories.dart';
 import 'core/settings/locale_store.dart';
@@ -25,12 +26,21 @@ Future<void> main() async {
   final config = AppConfig.fromEnvironment();
   final localeStore = await LocaleStore.open();
 
-  // TODO(08.9): in prod the token comes from Firebase, refreshed per call.
-  // The seam is already the right shape -- ConnectClient asks for a token on
-  // every request rather than holding one, so nothing above changes.
+  // Task 08.9: the session owns the token and its refresh. Dev signs in as the
+  // seeded manager; prod has no sign-in until Firebase lands (task 09.2), so it
+  // runs tokenless and the server answers `unauthenticated` → onboarding.
+  final auth = AuthSession(
+    config.isDev
+        ? DevAuthBackend(config.devFirebaseUid)
+        : const UnauthenticatedBackend(),
+  );
+
+  // ConnectClient still just asks for a token per call and, on a 401, asks the
+  // session to refresh and retries once -- the seam was always this shape.
   final client = ConnectClient(
     baseUrl: config.apiBaseUrl,
-    token: () => config.isDev ? 'dev:${config.devFirebaseUid}' : null,
+    token: auth.token,
+    onUnauthenticated: auth.refresh,
   );
 
   runApp(TinBelaApp(

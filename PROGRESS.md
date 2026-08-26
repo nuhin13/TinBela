@@ -159,7 +159,12 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [x] 08.8 Error/loading/empty primitives — skeleton, retry, toast,
       FinishedState. Retry suppressed on non-retryable codes; the server's
       localised message is rendered rather than re-invented
-- [ ] 08.9 Google Sign-In
+- [~] 08.9 Google Sign-In — token lifecycle done: `AuthSession` owns the
+      cache + refresh policy (proactive before expiry, reactive retry-once on a
+      401 via `ConnectClient.onUnauthenticated`), plus `signOut()`. Proven in
+      `test/core/auth/auth_session_test.dart` and the retry cases in
+      `connect_client_test.dart`. Dev signs in as the seeded manager; the
+      concrete `FirebaseAuthBackend` + the Google button + manifest are 09.2.
 
 ### EPIC 09 — Onboarding · *gate: stranger → usable Today screen in <90s*
 - [x] 09.1 Splash + language — bn default, persisted in shared_preferences pre-auth

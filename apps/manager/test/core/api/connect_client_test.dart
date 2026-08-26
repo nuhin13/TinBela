@@ -185,6 +185,82 @@ void main() {
           .having((e) => e.isRetryable, 'isRetryable', isTrue)),
     );
   });
+
+  test('refreshes and retries once when the server rejects the token',
+      () async {
+    // Task 08.9's guarantee, at the transport boundary: the first call carries
+    // an expired token and is refused; after a refresh the second carries the
+    // new one and succeeds -- the manager never sees the 401.
+    api.respondEach([
+      (401, '{"code":"unauthenticated","message":"টোকেন মেয়াদোত্তীর্ণ"}'),
+      (200, _getMeBody),
+    ]);
+
+    var tokenN = 0;
+    var refreshed = false;
+    final client = ConnectClient(
+      baseUrl: api.baseUrl,
+      token: () async => 'token#$tokenN',
+      onUnauthenticated: () async {
+        refreshed = true;
+        tokenN += 1;
+        return true;
+      },
+    );
+
+    final res = await client.unary(
+      'tinbela.core.v1.CoreService/GetMe',
+      GetMeRequest(),
+      GetMeResponse.new,
+    );
+
+    expect(res.user.name, 'রফিকুল ইসলাম');
+    expect(refreshed, isTrue);
+    expect(api.requests, 2);
+    // The retry carried the refreshed token, not the stale one it started with.
+    expect(api.lastHeaders!['authorization'], 'Bearer token#1');
+  });
+
+  test('a still-401 after refresh surfaces as unauthenticated, never a loop',
+      () async {
+    api.respondEach([
+      (401, '{"code":"unauthenticated","message":"x"}'),
+      (401, '{"code":"unauthenticated","message":"x"}'),
+    ]);
+
+    var recoveries = 0;
+    final client = ConnectClient(
+      baseUrl: api.baseUrl,
+      token: () => 'stale',
+      onUnauthenticated: () async {
+        recoveries += 1;
+        return true;
+      },
+    );
+
+    await expectLater(
+      client.unary('tinbela.core.v1.CoreService/GetMe', GetMeRequest(),
+          GetMeResponse.new),
+      throwsA(isA<ApiException>()
+          .having((e) => e.code, 'code', ApiErrorCode.unauthenticated)),
+    );
+    expect(api.requests, 2, reason: 'retried exactly once, not in a loop');
+    expect(recoveries, 1);
+  });
+
+  test('without a recovery hook a 401 is surfaced, not retried', () async {
+    // The pre-08.9 behaviour still holds when no session is wired in.
+    api.respondEach([(401, '{"code":"unauthenticated","message":"x"}')]);
+    final client = ConnectClient(baseUrl: api.baseUrl, token: () => 't');
+
+    await expectLater(
+      client.unary('tinbela.core.v1.CoreService/GetMe', GetMeRequest(),
+          GetMeResponse.new),
+      throwsA(isA<ApiException>()
+          .having((e) => e.code, 'code', ApiErrorCode.unauthenticated)),
+    );
+    expect(api.requests, 1);
+  });
 }
 
 /// A real HTTP server on a real socket. Not a mocked http.Client: the point
@@ -200,8 +276,15 @@ class _FakeApi {
   String _body = '{}';
   Map<String, String> _headers = const {};
 
+  /// Distinct answers, consumed one per request. When set, it overrides the
+  /// single `respond` body -- for exercising a 401-then-200 refresh retry.
+  final List<(int, String)> _sequence = [];
+
   /// When true the server accepts the request and never answers.
   bool hang = false;
+
+  /// How many requests the server has received. A retry shows up as 2.
+  int requests = 0;
 
   String? lastPath;
   String? lastBody;
@@ -222,8 +305,14 @@ class _FakeApi {
     _headers = headers;
   }
 
+  /// Answer each request with the next entry, in order.
+  void respondEach(List<(int, String)> items) => _sequence
+    ..clear()
+    ..addAll(items);
+
   Future<void> _serve() async {
     await for (final req in _server) {
+      requests += 1;
       lastPath = req.uri.path;
       lastBody = await utf8.decoder.bind(req).join();
       lastHeaders = {
@@ -232,10 +321,12 @@ class _FakeApi {
 
       if (hang) continue;
 
-      req.response.statusCode = _status;
+      final (status, body) =
+          _sequence.isNotEmpty ? _sequence.removeAt(0) : (_status, _body);
+      req.response.statusCode = status;
       req.response.headers.contentType = ContentType.json;
       _headers.forEach(req.response.headers.set);
-      req.response.add(utf8.encode(_body));
+      req.response.add(utf8.encode(body));
       await req.response.close();
     }
   }
