@@ -33,7 +33,7 @@ func TestRLSTenantIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("connect as %s: %v", AppUser, err)
 	}
-	defer app.Close(ctx)
+	defer func() { _ = app.Close(ctx) }()
 
 	// The role the API actually uses must not be able to sidestep RLS.
 	// Without this the rest of the test would pass against a superuser only
