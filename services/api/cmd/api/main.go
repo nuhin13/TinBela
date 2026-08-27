@@ -56,6 +56,19 @@ func run(logger *slog.Logger) error {
 		return err
 	}
 
+	// The admin surface (Epic 16) reads through its own read-only pool
+	// (ADR-0016). Without ADMIN_PG_DSN it is left unset, which -- together with
+	// an empty STAFF_UIDS -- keeps the admin surface closed rather than
+	// silently reusing the member-facing pool.
+	var adminPool *pgxpool.Pool
+	if adminDSN := os.Getenv("ADMIN_PG_DSN"); adminDSN != "" {
+		adminPool, err = pgxpool.New(ctx, adminDSN)
+		if err != nil {
+			return err
+		}
+		defer adminPool.Close()
+	}
+
 	mux := http.NewServeMux()
 	registerOps(mux, pool)
 	transport.Register(mux, transport.Deps{
@@ -64,6 +77,9 @@ func run(logger *slog.Logger) error {
 		Verifier:    verifier,
 		RateLimiter: transport.NewRateLimiter(10, 30),
 		Timeout:     15 * time.Second,
+		AdminPool:   adminPool,
+		Staff:       transport.NewStaffPolicy(splitEnv("STAFF_UIDS")),
+		AdminIPs:    transport.NewIPAllowList(splitEnv("ADMIN_IP_ALLOWLIST")),
 	})
 
 	port := os.Getenv("HTTP_PORT")
@@ -108,11 +124,23 @@ func buildVerifier(ctx context.Context) (transport.TokenVerifier, error) {
 }
 
 func corsOrigins() []string {
-	raw := os.Getenv("CORS_ORIGINS")
+	return splitEnv("CORS_ORIGINS")
+}
+
+// splitEnv reads a comma-separated env var into a slice, dropping blanks.
+func splitEnv(name string) []string {
+	raw := os.Getenv(name)
 	if raw == "" {
 		return nil
 	}
-	return strings.Split(raw, ",")
+	parts := strings.Split(raw, ",")
+	out := parts[:0]
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 // registerOps mounts the operational endpoints. They sit outside the Connect

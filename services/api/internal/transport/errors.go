@@ -30,6 +30,7 @@ var errorTable = map[error]localised{
 	core.ErrAlreadyLeft:        {connect.CodeFailedPrecondition, "এই সদস্য আগেই মেস ছেড়েছেন", "This member has already left"},
 	core.ErrCannotLeaveManager: {connect.CodeFailedPrecondition, "ম্যানেজারকে এভাবে সরানো যায় না", "The manager cannot be removed this way"},
 	core.ErrUnauthenticated:    {connect.CodeUnauthenticated, "আবার সাইন ইন করুন", "Please sign in again"},
+	core.ErrNotStaff:           {connect.CodePermissionDenied, "শুধু স্টাফ এটি দেখতে পারেন", "Staff access only"},
 
 	// docs/eng/errors.md specifies permission_denied with a generic
 	// "not found" MESSAGE. Following the table as written.

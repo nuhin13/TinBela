@@ -20,3 +20,4 @@ Create new ones with `/adr "<title>"`.
 | [0013](0013-golden-test-vectors-as-shared-json.md) | Golden test vectors as shared JSON | Never — extend whenever a bug is found |
 | [0014](0014-design-tokens-as-generated-code-one-source-three-clients.md) | Design tokens as generated code | Never |
 | [0015](0015-single-repository-all-services-docs-and-harness-together.md) | Single repository | A product outgrows the shared pipeline |
+| [0016](0016-admin-reads-across-tenants-via-a-read-only-bypassrls-role.md) | Admin reads across tenants via a read-only BYPASSRLS role | Admin must mutate customer data, or a reporting replica is added |

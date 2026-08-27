@@ -9,12 +9,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AdminAuditLog struct {
+	ID        uuid.UUID          `json:"id"`
+	StaffUid  string             `json:"staff_uid"`
+	Action    string             `json:"action"`
+	Target    *string            `json:"target"`
+	RequestID *string            `json:"request_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type DayFlag struct {
 	ID       uuid.UUID   `json:"id"`
 	TenantID uuid.UUID   `json:"tenant_id"`
 	Date     pgtype.Date `json:"date"`
 	Kind     string      `json:"kind"`
 	Note     *string     `json:"note"`
+}
+
+type FeatureFlag struct {
+	Key       string             `json:"key"`
+	Value     bool               `json:"value"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy *string            `json:"updated_by"`
 }
 
 type Group struct {

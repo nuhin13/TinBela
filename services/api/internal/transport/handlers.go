@@ -17,7 +17,6 @@ import (
 	"github.com/droidbuilder/tinbela/services/api/internal/invites"
 
 	"github.com/droidbuilder/tinbela/services/api/internal/db"
-	adminv1 "github.com/droidbuilder/tinbela/services/api/internal/gen/tinbela/admin/v1"
 	corev1 "github.com/droidbuilder/tinbela/services/api/internal/gen/tinbela/core/v1"
 	mealsv1 "github.com/droidbuilder/tinbela/services/api/internal/gen/tinbela/meals/v1"
 	moneyv1 "github.com/droidbuilder/tinbela/services/api/internal/gen/tinbela/money/v1"
@@ -529,27 +528,7 @@ func (moneyService) GetStatement(context.Context, *connect.Request[moneyv1.GetSt
 	return nil, notYet("07", "07.5")
 }
 
-// adminService implements tinbela.admin.v1.AdminService (Epic 16).
-//
-// Mounted without the tenant interceptor: the admin surface reads across
-// messes by definition, so it needs its own authorisation, not this one.
-type adminService struct{}
-
-func (adminService) ListTenants(context.Context, *connect.Request[adminv1.ListTenantsRequest]) (*connect.Response[adminv1.ListTenantsResponse], error) {
-	return nil, notYet("16", "16.3")
-}
-func (adminService) GetTenant(context.Context, *connect.Request[adminv1.GetTenantRequest]) (*connect.Response[adminv1.GetTenantResponse], error) {
-	return nil, notYet("16", "16.4")
-}
-func (adminService) FindUser(context.Context, *connect.Request[adminv1.FindUserRequest]) (*connect.Response[adminv1.FindUserResponse], error) {
-	return nil, notYet("16", "16.5")
-}
-func (adminService) GetMetrics(context.Context, *connect.Request[adminv1.GetMetricsRequest]) (*connect.Response[adminv1.GetMetricsResponse], error) {
-	return nil, notYet("16", "16.6")
-}
-func (adminService) GetFlags(context.Context, *connect.Request[adminv1.GetFlagsRequest]) (*connect.Response[adminv1.GetFlagsResponse], error) {
-	return nil, notYet("16", "16.7")
-}
-func (adminService) SetFlag(context.Context, *connect.Request[adminv1.SetFlagRequest]) (*connect.Response[adminv1.SetFlagResponse], error) {
-	return nil, notYet("16", "16.7")
-}
+// adminService (tinbela.admin.v1.AdminService, Epic 16) is implemented in
+// admin_handlers.go. It is mounted without the tenant interceptor and carries
+// its own staff authorisation (admin.go), reading through the read-only
+// tinbela_admin pool (ADR-0016).

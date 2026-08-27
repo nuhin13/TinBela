@@ -22,4 +22,5 @@ var (
 	ErrCannotLeaveManager = errors.New("the manager cannot be removed this way")
 	ErrTenantMismatch     = errors.New("tenant mismatch")
 	ErrUnauthenticated    = errors.New("unauthenticated")
+	ErrNotStaff           = errors.New("not staff")
 )
