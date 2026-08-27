@@ -14,6 +14,7 @@ import 'package:tinbela_manager/core/config/app_config.dart';
 import 'package:tinbela_manager/core/data/repositories.dart';
 import 'package:tinbela_manager/core/domain/models.dart';
 import 'package:tinbela_manager/core/settings/locale_store.dart';
+import 'package:tinbela_manager/core/settings/numerals_store.dart';
 import 'package:tinbela_manager/features/onboarding/welcome_screen.dart';
 
 const _user = User(
@@ -46,9 +47,30 @@ class _FakeMesses implements MessesRepository {
       (mess: _mess, inviteLink: 'https://tinbela.app/j/x');
 }
 
+class _FakeMembers implements MembersRepository {
+  @override
+  Future<List<Member>> list({required String messId}) async => const [];
+
+  @override
+  Future<({Member member, String inviteLink})> add({
+    required String messId,
+    required String displayName,
+    String? phoneE164,
+  }) async =>
+      (
+        member: Member(
+          id: 'x',
+          displayName: displayName,
+          role: MemberRole.member,
+        ),
+        inviteLink: 'https://tinbela.app/j/x',
+      );
+}
+
 Future<Widget> _app(Object sessionResult) async {
   SharedPreferences.setMockInitialValues({});
   final store = await LocaleStore.open();
+  final numerals = await NumeralsStore.open();
   return TinBelaApp(
     config: AppConfig(
       flavor: Flavor.dev,
@@ -56,8 +78,10 @@ Future<Widget> _app(Object sessionResult) async {
       devFirebaseUid: 'dev-8801711000001',
     ),
     localeController: LocaleController(store),
+    numerals: NumeralsController(numerals),
     session: _FakeSession(sessionResult),
     messes: _FakeMesses(),
+    members: _FakeMembers(),
     onSignIn: () async => true,
   );
 }

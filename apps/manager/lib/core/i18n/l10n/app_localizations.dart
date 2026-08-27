@@ -337,6 +337,38 @@ abstract class AppLocalizations {
   /// In bn, this message translates to:
   /// **'সদস্য যোগ করুন'**
   String get emptyMembersAction;
+
+  /// Epic 13 — members & settings (আরও tab).
+  String get membersTitle;
+  String get addMember;
+  String get addMemberSend;
+  String get memberNameLabel;
+  String get memberPhoneOptional;
+  String get roleManager;
+  String get inviteSent;
+  String get inviteOpened;
+  String get inviteLinked;
+  String get messProfileTitle;
+  String get messNameLabel;
+  String get messKindLabel;
+  String get messKindMess;
+  String get languageTitle;
+  String get languageSectionLabel;
+  String get numeralsSectionLabel;
+  String get numeralsBangla;
+  String get numeralsLatin;
+  String get aboutTitle;
+  String aboutVersion(String version);
+  String get aboutDroidBuilder;
+  String get aboutPrivacy;
+  String get aboutTerms;
+  String get dataExportTitle;
+  String get dataExportBody;
+  String get dataExportButton;
+  String get dataExportSubject;
+  String get deleteAccountTitle;
+  String get deleteAccountPending;
+  String get deleteAccountWebButton;
 }
 
 class _AppLocalizationsDelegate
