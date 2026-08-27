@@ -38,7 +38,7 @@ jobs:
       # the generated TypeScript client's tests. Both need node and pnpm.
       - uses: pnpm/action-setup@v4
         with: { version: 9 }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "22" }
 
       - name: Install JS dependencies
