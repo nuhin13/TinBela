@@ -60,7 +60,15 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 
 ### EPIC 02 — Domain engine ★ · *gate: 9 properties + vectors green, benchmark recorded*
 - [x] 02.1 Pure input/output types
-- [ ] 02.2 ★ **Nine property tests, written BEFORE implementation**
+- [~] 02.2 ★ **Nine property tests, written BEFORE implementation** — bodies
+      written for all nine (P1 conservation, P7 idempotent close in
+      `settle_test.go`; P2–P6, P8, P9 in `engine_test.go`) against the founder's
+      scaffold, plus verified rapid generators (`*_generators_test.go`) they draw
+      from. Each stays `t.Skip`-ped so the build is green until the engine
+      lands: unskip one per property as `Materialize`/`Settle` (02.3/02.4 ★) are
+      implemented. Generators + shuffle + compile are green now (`make property`
+      passes, lint clean). Golden vectors (02.6) + runner (02.7) + benchmark
+      (02.8) remain ★.
 - [ ] 02.3 ★ `Materialize`
 - [ ] 02.4 ★ `Settle`
 - [ ] 02.5 ★ Conservation invariant asserted in code
