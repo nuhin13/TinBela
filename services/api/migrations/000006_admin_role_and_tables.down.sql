@@ -1,0 +1,7 @@
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT ON TABLES FROM tinbela_admin;
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM tinbela_admin;
+REVOKE USAGE ON SCHEMA public FROM tinbela_admin;
+DROP ROLE IF EXISTS tinbela_admin;
+
+DROP TABLE IF EXISTS admin_audit_log;
+DROP TABLE IF EXISTS feature_flags;

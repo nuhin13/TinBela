@@ -32,12 +32,16 @@ class TinBelaApp extends StatelessWidget {
     required this.localeController,
     required this.session,
     required this.messes,
+    required this.onSignIn,
   });
 
   final AppConfig config;
   final LocaleController localeController;
   final SessionRepository session;
   final MessesRepository messes;
+
+  /// Runs interactive Google Sign-In (task 09.2). True once signed in.
+  final Future<bool> Function() onSignIn;
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +82,7 @@ class TinBelaApp extends StatelessWidget {
       home: _Root(
         session: session,
         messes: messes,
+        onSignIn: onSignIn,
         localeController: localeController,
       ),
     );
@@ -94,11 +99,13 @@ class _Root extends StatefulWidget {
   const _Root({
     required this.session,
     required this.messes,
+    required this.onSignIn,
     required this.localeController,
   });
 
   final SessionRepository session;
   final MessesRepository messes;
+  final Future<bool> Function() onSignIn;
   final LocaleController localeController;
 
   @override
@@ -136,7 +143,9 @@ class _RootState extends State<_Root> {
   }
 
   Widget _onboarding() => OnboardingFlow(
+        session: widget.session,
         messes: widget.messes,
+        onSignIn: widget.onSignIn,
         locale: widget.localeController.locale,
         onLocaleSelected: widget.localeController.set,
         onFinished: (_) => _reload(),

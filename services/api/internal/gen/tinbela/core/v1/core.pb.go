@@ -911,6 +911,105 @@ func (x *ListMembersResponse) GetMembers() []*Member {
 	return nil
 }
 
+// Soft leave (task 04.8): the member stops counting from left_at forward, but
+// every meal up to it still counts. There is no hard delete — the tenure
+// boundary is a date on the row, never a removed row (property P8).
+type LeaveMemberRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MessId        string                 `protobuf:"bytes,1,opt,name=mess_id,json=messId,proto3" json:"mess_id,omitempty"`
+	MemberId      string                 `protobuf:"bytes,2,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeaveMemberRequest) Reset() {
+	*x = LeaveMemberRequest{}
+	mi := &file_tinbela_core_v1_core_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveMemberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveMemberRequest) ProtoMessage() {}
+
+func (x *LeaveMemberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_tinbela_core_v1_core_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveMemberRequest.ProtoReflect.Descriptor instead.
+func (*LeaveMemberRequest) Descriptor() ([]byte, []int) {
+	return file_tinbela_core_v1_core_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *LeaveMemberRequest) GetMessId() string {
+	if x != nil {
+		return x.MessId
+	}
+	return ""
+}
+
+func (x *LeaveMemberRequest) GetMemberId() string {
+	if x != nil {
+		return x.MemberId
+	}
+	return ""
+}
+
+type LeaveMemberResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Member        *Member                `protobuf:"bytes,1,opt,name=member,proto3" json:"member,omitempty"` // carries left_at, now set
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeaveMemberResponse) Reset() {
+	*x = LeaveMemberResponse{}
+	mi := &file_tinbela_core_v1_core_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveMemberResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveMemberResponse) ProtoMessage() {}
+
+func (x *LeaveMemberResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_tinbela_core_v1_core_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveMemberResponse.ProtoReflect.Descriptor instead.
+func (*LeaveMemberResponse) Descriptor() ([]byte, []int) {
+	return file_tinbela_core_v1_core_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *LeaveMemberResponse) GetMember() *Member {
+	if x != nil {
+		return x.Member
+	}
+	return nil
+}
+
 var File_tinbela_core_v1_core_proto protoreflect.FileDescriptor
 
 const file_tinbela_core_v1_core_proto_rawDesc = "" +
@@ -971,7 +1070,12 @@ const file_tinbela_core_v1_core_proto_rawDesc = "" +
 	"\x12ListMembersRequest\x12\x17\n" +
 	"\amess_id\x18\x01 \x01(\tR\x06messId\"H\n" +
 	"\x13ListMembersResponse\x121\n" +
-	"\amembers\x18\x01 \x03(\v2\x17.tinbela.core.v1.MemberR\amembers*r\n" +
+	"\amembers\x18\x01 \x03(\v2\x17.tinbela.core.v1.MemberR\amembers\"J\n" +
+	"\x12LeaveMemberRequest\x12\x17\n" +
+	"\amess_id\x18\x01 \x01(\tR\x06messId\x12\x1b\n" +
+	"\tmember_id\x18\x02 \x01(\tR\bmemberId\"F\n" +
+	"\x13LeaveMemberResponse\x12/\n" +
+	"\x06member\x18\x01 \x01(\v2\x17.tinbela.core.v1.MemberR\x06member*r\n" +
 	"\n" +
 	"TenantKind\x12\x1b\n" +
 	"\x17TENANT_KIND_UNSPECIFIED\x10\x00\x12\x14\n" +
@@ -989,13 +1093,14 @@ const file_tinbela_core_v1_core_proto_rawDesc = "" +
 	"\x18INVITE_STATE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11INVITE_STATE_SENT\x10\x01\x12\x17\n" +
 	"\x13INVITE_STATE_OPENED\x10\x02\x12\x17\n" +
-	"\x13INVITE_STATE_LINKED\x10\x032\xda\x02\n" +
+	"\x13INVITE_STATE_LINKED\x10\x032\xb4\x03\n" +
 	"\vCoreService\x12F\n" +
 	"\x05GetMe\x12\x1d.tinbela.core.v1.GetMeRequest\x1a\x1e.tinbela.core.v1.GetMeResponse\x12U\n" +
 	"\n" +
 	"CreateMess\x12\".tinbela.core.v1.CreateMessRequest\x1a#.tinbela.core.v1.CreateMessResponse\x12R\n" +
 	"\tAddMember\x12!.tinbela.core.v1.AddMemberRequest\x1a\".tinbela.core.v1.AddMemberResponse\x12X\n" +
-	"\vListMembers\x12#.tinbela.core.v1.ListMembersRequest\x1a$.tinbela.core.v1.ListMembersResponseBRZPgithub.com/droidbuilder/tinbela/services/api/internal/gen/tinbela/core/v1;corev1b\x06proto3"
+	"\vListMembers\x12#.tinbela.core.v1.ListMembersRequest\x1a$.tinbela.core.v1.ListMembersResponse\x12X\n" +
+	"\vLeaveMember\x12#.tinbela.core.v1.LeaveMemberRequest\x1a$.tinbela.core.v1.LeaveMemberResponseBRZPgithub.com/droidbuilder/tinbela/services/api/internal/gen/tinbela/core/v1;corev1b\x06proto3"
 
 var (
 	file_tinbela_core_v1_core_proto_rawDescOnce sync.Once
@@ -1010,7 +1115,7 @@ func file_tinbela_core_v1_core_proto_rawDescGZIP() []byte {
 }
 
 var file_tinbela_core_v1_core_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_tinbela_core_v1_core_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_tinbela_core_v1_core_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_tinbela_core_v1_core_proto_goTypes = []any{
 	(TenantKind)(0),             // 0: tinbela.core.v1.TenantKind
 	(Role)(0),                   // 1: tinbela.core.v1.Role
@@ -1027,14 +1132,16 @@ var file_tinbela_core_v1_core_proto_goTypes = []any{
 	(*AddMemberResponse)(nil),   // 12: tinbela.core.v1.AddMemberResponse
 	(*ListMembersRequest)(nil),  // 13: tinbela.core.v1.ListMembersRequest
 	(*ListMembersResponse)(nil), // 14: tinbela.core.v1.ListMembersResponse
-	(*Date)(nil),                // 15: tinbela.core.v1.Date
+	(*LeaveMemberRequest)(nil),  // 15: tinbela.core.v1.LeaveMemberRequest
+	(*LeaveMemberResponse)(nil), // 16: tinbela.core.v1.LeaveMemberResponse
+	(*Date)(nil),                // 17: tinbela.core.v1.Date
 }
 var file_tinbela_core_v1_core_proto_depIdxs = []int32{
 	0,  // 0: tinbela.core.v1.Mess.kind:type_name -> tinbela.core.v1.TenantKind
 	5,  // 1: tinbela.core.v1.Mess.slots:type_name -> tinbela.core.v1.Slot
 	1,  // 2: tinbela.core.v1.Member.role:type_name -> tinbela.core.v1.Role
-	15, // 3: tinbela.core.v1.Member.joined_at:type_name -> tinbela.core.v1.Date
-	15, // 4: tinbela.core.v1.Member.left_at:type_name -> tinbela.core.v1.Date
+	17, // 3: tinbela.core.v1.Member.joined_at:type_name -> tinbela.core.v1.Date
+	17, // 4: tinbela.core.v1.Member.left_at:type_name -> tinbela.core.v1.Date
 	2,  // 5: tinbela.core.v1.Member.invite_state:type_name -> tinbela.core.v1.InviteState
 	3,  // 6: tinbela.core.v1.GetMeResponse.user:type_name -> tinbela.core.v1.User
 	4,  // 7: tinbela.core.v1.GetMeResponse.messes:type_name -> tinbela.core.v1.Mess
@@ -1042,19 +1149,22 @@ var file_tinbela_core_v1_core_proto_depIdxs = []int32{
 	4,  // 9: tinbela.core.v1.CreateMessResponse.mess:type_name -> tinbela.core.v1.Mess
 	6,  // 10: tinbela.core.v1.AddMemberResponse.member:type_name -> tinbela.core.v1.Member
 	6,  // 11: tinbela.core.v1.ListMembersResponse.members:type_name -> tinbela.core.v1.Member
-	7,  // 12: tinbela.core.v1.CoreService.GetMe:input_type -> tinbela.core.v1.GetMeRequest
-	9,  // 13: tinbela.core.v1.CoreService.CreateMess:input_type -> tinbela.core.v1.CreateMessRequest
-	11, // 14: tinbela.core.v1.CoreService.AddMember:input_type -> tinbela.core.v1.AddMemberRequest
-	13, // 15: tinbela.core.v1.CoreService.ListMembers:input_type -> tinbela.core.v1.ListMembersRequest
-	8,  // 16: tinbela.core.v1.CoreService.GetMe:output_type -> tinbela.core.v1.GetMeResponse
-	10, // 17: tinbela.core.v1.CoreService.CreateMess:output_type -> tinbela.core.v1.CreateMessResponse
-	12, // 18: tinbela.core.v1.CoreService.AddMember:output_type -> tinbela.core.v1.AddMemberResponse
-	14, // 19: tinbela.core.v1.CoreService.ListMembers:output_type -> tinbela.core.v1.ListMembersResponse
-	16, // [16:20] is the sub-list for method output_type
-	12, // [12:16] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	6,  // 12: tinbela.core.v1.LeaveMemberResponse.member:type_name -> tinbela.core.v1.Member
+	7,  // 13: tinbela.core.v1.CoreService.GetMe:input_type -> tinbela.core.v1.GetMeRequest
+	9,  // 14: tinbela.core.v1.CoreService.CreateMess:input_type -> tinbela.core.v1.CreateMessRequest
+	11, // 15: tinbela.core.v1.CoreService.AddMember:input_type -> tinbela.core.v1.AddMemberRequest
+	13, // 16: tinbela.core.v1.CoreService.ListMembers:input_type -> tinbela.core.v1.ListMembersRequest
+	15, // 17: tinbela.core.v1.CoreService.LeaveMember:input_type -> tinbela.core.v1.LeaveMemberRequest
+	8,  // 18: tinbela.core.v1.CoreService.GetMe:output_type -> tinbela.core.v1.GetMeResponse
+	10, // 19: tinbela.core.v1.CoreService.CreateMess:output_type -> tinbela.core.v1.CreateMessResponse
+	12, // 20: tinbela.core.v1.CoreService.AddMember:output_type -> tinbela.core.v1.AddMemberResponse
+	14, // 21: tinbela.core.v1.CoreService.ListMembers:output_type -> tinbela.core.v1.ListMembersResponse
+	16, // 22: tinbela.core.v1.CoreService.LeaveMember:output_type -> tinbela.core.v1.LeaveMemberResponse
+	18, // [18:23] is the sub-list for method output_type
+	13, // [13:18] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_tinbela_core_v1_core_proto_init() }
@@ -1069,7 +1179,7 @@ func file_tinbela_core_v1_core_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_tinbela_core_v1_core_proto_rawDesc), len(file_tinbela_core_v1_core_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

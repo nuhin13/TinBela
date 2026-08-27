@@ -61,6 +61,22 @@
   "@getStarted": {
     "description": "Primary button on the welcome screen."
   },
+  "signInPrompt": "শুরু করতে সাইন ইন করুন",
+  "@signInPrompt": {
+    "description": "Sign-in screen heading (task 09.2). Google Sign-In, one tap — ADR-0009."
+  },
+  "signInWithGoogle": "Google দিয়ে সাইন ইন",
+  "@signInWithGoogle": {
+    "description": "The one sign-in button. 'Google' is a brand name — never translated."
+  },
+  "signInReassure": "এক ট্যাপে — কোনো ওটিপি বা পাসওয়ার্ড নেই।",
+  "@signInReassure": {
+    "description": "Why there is no phone/OTP field (ADR-0009). Reassurance, not a feature list."
+  },
+  "signInFailed": "সাইন ইন হয়নি, আবার চেষ্টা করুন",
+  "@signInFailed": {
+    "description": "Shown when Google Sign-In is cancelled or fails. A retry, never a dead end."
+  },
   "languageBangla": "বাংলা",
   "@languageBangla": {
     "description": "Language choice on the welcome screen. bn is the default."

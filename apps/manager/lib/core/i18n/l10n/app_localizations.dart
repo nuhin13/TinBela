@@ -182,6 +182,30 @@ abstract class AppLocalizations {
   /// **'শুরু করুন'**
   String get getStarted;
 
+  /// Sign-in screen heading (task 09.2). Google Sign-In, one tap — ADR-0009.
+  ///
+  /// In bn, this message translates to:
+  /// **'শুরু করতে সাইন ইন করুন'**
+  String get signInPrompt;
+
+  /// The one sign-in button. 'Google' is a brand name — never translated.
+  ///
+  /// In bn, this message translates to:
+  /// **'Google দিয়ে সাইন ইন'**
+  String get signInWithGoogle;
+
+  /// Why there is no phone/OTP field (ADR-0009). Reassurance, not a feature list.
+  ///
+  /// In bn, this message translates to:
+  /// **'এক ট্যাপে — কোনো ওটিপি বা পাসওয়ার্ড নেই।'**
+  String get signInReassure;
+
+  /// Shown when Google Sign-In is cancelled or fails. A retry, never a dead end.
+  ///
+  /// In bn, this message translates to:
+  /// **'সাইন ইন হয়নি, আবার চেষ্টা করুন'**
+  String get signInFailed;
+
   /// Language choice on the welcome screen. bn is the default.
   ///
   /// In bn, this message translates to:

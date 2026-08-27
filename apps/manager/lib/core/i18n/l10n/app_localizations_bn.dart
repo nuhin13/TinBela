@@ -54,6 +54,18 @@ class AppLocalizationsBn extends AppLocalizations {
   String get getStarted => 'শুরু করুন';
 
   @override
+  String get signInPrompt => 'শুরু করতে সাইন ইন করুন';
+
+  @override
+  String get signInWithGoogle => 'Google দিয়ে সাইন ইন';
+
+  @override
+  String get signInReassure => 'এক ট্যাপে — কোনো ওটিপি বা পাসওয়ার্ড নেই।';
+
+  @override
+  String get signInFailed => 'সাইন ইন হয়নি, আবার চেষ্টা করুন';
+
+  @override
   String get languageBangla => 'বাংলা';
 
   @override

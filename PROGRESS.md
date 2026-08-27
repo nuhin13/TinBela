@@ -109,7 +109,17 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [x] 04.7 Role checks at the interceptor — fail-closed procedure map;
       unlisted procedures are manager-only. Proved end to end: a MEMBER gets
       permission_denied on AddLedgerEntry where a MANAGER reaches the stub
-- [ ] 04.8 Soft leave
+- [x] 04.8 Soft leave — `LeaveMember` RPC sets `left_at` (today, Asia/Dhaka)
+      via UPDATE; never deletes, so prior `meal_exceptions` still count (the
+      API half of P8 — the engine half is 02.3 ★). Manager-only (fail-closed
+      interceptor), refuses to remove the manager or a member who already
+      left, and is tenant-scoped. Verified against a real Postgres:
+      `leave_member_test.go` (leave, prior-meals-preserved, double-leave,
+      not-found, manager-guard, two-tenant isolation) all green, plus the
+      full `go test ./...`, `golangci-lint`, `buf lint`, and `buf breaking`.
+      **Note:** TS/Dart clients regenerate on the next full `make proto` (buf's
+      remote plugins are unreachable from this container); the RPC is additive
+      so nothing breaks meanwhile.
 - [ ] 04.9 ★ Account deletion policy
 
 ### EPIC 05 — Meal service · *gate: 30-day scenario matches hand-computed sheet*
@@ -159,11 +169,24 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [x] 08.8 Error/loading/empty primitives — skeleton, retry, toast,
       FinishedState. Retry suppressed on non-retryable codes; the server's
       localised message is rendered rather than re-invented
-- [ ] 08.9 Google Sign-In
+- [~] 08.9 Google Sign-In — token lifecycle done: `AuthSession` owns the
+      cache + refresh policy (proactive before expiry, reactive retry-once on a
+      401 via `ConnectClient.onUnauthenticated`), plus `signOut()`. Proven in
+      `test/core/auth/auth_session_test.dart` and the retry cases in
+      `connect_client_test.dart`. Dev signs in as the seeded manager; the
+      concrete `FirebaseAuthBackend` + the Google button + manifest are 09.2.
 
 ### EPIC 09 — Onboarding · *gate: stranger → usable Today screen in <90s*
 - [x] 09.1 Splash + language — bn default, persisted in shared_preferences pre-auth
-- [ ] 09.2 Sign-in
+- [~] 09.2 Sign-in — Google Sign-In via Firebase (ADR-0009), one tap, no OTP,
+      no READ_SMS. `FirebaseAuthBackend` fills the 08.9 `AuthBackend` seam;
+      `SignInScreen` sits between welcome and mess setup and, on success,
+      re-checks GetMe so a reinstalling manager lands in their mess instead of
+      re-creating it. Gradle applies google-services only when
+      `google-services.json` is present, so dev builds (DevAuthBackend, no
+      Firebase) still compile. **NOT verified here:** no Flutter SDK to
+      `pub get`/build, and prod needs a real `google-services.json` + the
+      SHA-1 in the Firebase console. Screen logic tested in `onboarding_test`.
 - [ ] 09.3 ★ 3-question setup — **no fourth question, ever**
 - [x] 09.4 How-it-works card — skippable
 - [x] 09.5 Invite link + Messenger share — Messenger first, clipboard
@@ -230,24 +253,42 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 
 ### EPIC 15 — Landing · *gate: privacy page matches data safety form*
 - [ ] 15.1 ★ Home — one idea
-- [ ] 15.2 Tap comparison graphic
-- [ ] 15.3 Screenshots + Play badge
+- [x] 15.2 Tap comparison graphic — `TapComparison`: khata ৩/দিন · other apps
+      ৩/দিন · TinBela **০/দিন** (highlighted, "কিছু করার নেই"). The zero is the
+      differentiator. Token colours, bn numerals, accessible marks.
+- [x] 15.3 Screenshots + Play badge — `AppShowcase`: a built Today-screen mock
+      (finished-day state, no binary asset — real captures are 19.4) + a Play
+      CTA. Official Play badge art ships with the listing (19.x).
 - [ ] 15.4 ★ `/privacy`
 - [ ] 15.5 ★ `/terms`
 - [ ] 15.6 ★ `/delete-account`
-- [ ] 15.7 SEO + OG images
+- [~] 15.7 SEO + OG images — full metadata (title template, canonical, robots,
+      openGraph bn_BD, twitter card, metadataBase) + a generated
+      `opengraph-image.tsx` rendering the brand + tagline in Hind Siliguri
+      (visually verified — Bangla conjuncts correct). Messenger preview done.
+      **NOT done:** bn/en locale routing — the site is bn-only; en routing is a
+      larger i18n lift beyond the Messenger-preview done-when. Flagged.
 
 ### EPIC 16 — Admin portal · *gate: answer "what did mess X do Tuesday" in 30s*
 > **Start on Day 5.** Without Django admin this is your only window into the
 > running system for the next nine days.
-- [ ] 16.1 Auth + IP allowlist
-- [ ] 16.2 Dashboard
-- [ ] 16.3 Tenant search
-- [ ] 16.4 ★ Read-only inspector
-- [ ] 16.5 User lookup
-- [ ] 16.6 Feature flags
-- [ ] 16.7 Metrics
-- [ ] 16.8 Admin audit log
+> **Backend + portal built and verified end to end** (API binary + Next.js
+> portal against real Postgres, screenshots taken). ADR-0016 adds a read-only
+> `tinbela_admin` role (BYPASSRLS, SELECT-only) so cross-tenant reads work while
+> "no mutation path" is a database grant. Only 16.4 (the inspector) is left — ★.
+- [x] 16.1 Auth + IP allowlist — `adminGuard`: staff Firebase-uid allow-list +
+      IP allow-list; a valid manager token gets 403 (verified live).
+- [x] 16.2 Dashboard — one screen: active messes · exceptions today · closes
+      this month · member links opened (Asia/Dhaka windows).
+- [x] 16.3 Tenant search — paginated `ListTenants`, name search, most-active
+      first, member_count + last_activity derived on read.
+- [ ] 16.4 ★ Read-only inspector — `GetTenant` intentionally unimplemented;
+      route + staff gate + read-only pool are in place for the founder.
+- [x] 16.5 User lookup — by phone / firebase uid; a miss is an empty answer.
+- [x] 16.6 Feature flags — `feature_flags` table + `SetFlag` (the only write)
+      + toggle UI incl. kill switch; takes effect on next read, no deploy.
+- [x] 16.7 Metrics — the dashboard counts (BRD §10 subset).
+- [x] 16.8 Admin audit log — `admin_audit_log`; every admin read writes a row.
 
 ### EPIC 17 — Telemetry · *gate: answer "how many exceptions yesterday"*
 - [ ] 17.1 Analytics wired

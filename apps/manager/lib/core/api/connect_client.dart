@@ -37,6 +37,15 @@ typedef TokenProvider = FutureOr<String?> Function();
 /// (GetMe, CreateMess).
 typedef TenantProvider = FutureOr<String?> Function();
 
+/// Recovers from a rejected token: force a refresh, and report whether a new
+/// one was obtained. Returning true means "retry the call worthwhile".
+///
+/// This is the reactive half of surviving token expiry (task 08.9). The
+/// proactive half lives in the [TokenProvider], which refreshes before expiry;
+/// this covers the token the server rejects that our own clock still believed
+/// in -- revocation, or clock skew past the refresh window.
+typedef UnauthenticatedRecovery = FutureOr<bool> Function();
+
 /// The header names the server reads. They are part of the contract
 /// (services/api/internal/transport), not local convention.
 const _authorizationHeader = 'Authorization';
@@ -49,6 +58,7 @@ class ConnectClient {
     http.Client? httpClient,
     TokenProvider? token,
     TenantProvider? tenant,
+    UnauthenticatedRecovery? onUnauthenticated,
     Duration timeout = const Duration(seconds: 15),
   }) =>
       ConnectClient._(
@@ -56,6 +66,7 @@ class ConnectClient {
         httpClient ?? http.Client(),
         token,
         tenant,
+        onUnauthenticated,
         timeout,
       );
 
@@ -64,6 +75,7 @@ class ConnectClient {
     this._http,
     this._token,
     this._tenant,
+    this._onUnauthenticated,
     this._timeout,
   );
 
@@ -71,6 +83,7 @@ class ConnectClient {
   final http.Client _http;
   final TokenProvider? _token;
   final TenantProvider? _tenant;
+  final UnauthenticatedRecovery? _onUnauthenticated;
   final Duration _timeout;
 
   /// Calls one unary procedure.
@@ -95,24 +108,36 @@ class ConnectClient {
     final uri = _baseUrl.replace(
       path: '${_baseUrl.path}/$procedure'.replaceAll('//', '/'),
     );
+    final body = jsonEncode(request.toProto3Json());
 
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-    };
-    final token = await _token?.call();
-    if (token != null && token.isNotEmpty) {
-      headers[_authorizationHeader] = 'Bearer $token';
-    }
-    final tenant = tenantId ?? await _tenant?.call();
-    if (tenant != null && tenant.isNotEmpty) {
-      headers[_tenantHeader] = tenant;
+    // Built per attempt, not once: the retry after a token refresh must carry
+    // the NEW token, so the header is re-read from the provider each time.
+    Future<http.Response> send() async {
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      final token = await _token?.call();
+      if (token != null && token.isNotEmpty) {
+        headers[_authorizationHeader] = 'Bearer $token';
+      }
+      final tenant = tenantId ?? await _tenant?.call();
+      if (tenant != null && tenant.isNotEmpty) {
+        headers[_tenantHeader] = tenant;
+      }
+      return _http.post(uri, headers: headers, body: body).timeout(_timeout);
     }
 
-    final http.Response res;
+    http.Response res;
     try {
-      res = await _http
-          .post(uri, headers: headers, body: jsonEncode(request.toProto3Json()))
-          .timeout(_timeout);
+      res = await send();
+      // A 401 mid-session is usually an expired token. Give the session one
+      // chance to mint a fresh one and retry -- once, never a loop: if the
+      // second answer is still 401, the manager genuinely has to sign in again.
+      if (res.statusCode == 401 && _onUnauthenticated != null) {
+        if (await _onUnauthenticated!()) {
+          res = await send();
+        }
+      }
     } on TimeoutException {
       // Mess wifi, not a server fault. Retryable, and the UI says so.
       throw const ApiException(

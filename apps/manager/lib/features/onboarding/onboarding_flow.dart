@@ -24,20 +24,31 @@ import '../../core/theme/tokens.g.dart';
 import '../../core/widgets/async_states.dart';
 import 'how_it_works_screen.dart';
 import 'invite_screen.dart';
+import 'sign_in_screen.dart';
 import 'welcome_screen.dart';
 
-enum _Step { welcome, explainer, setup, invite }
+// splash → language → sign-in → 3 questions → how-it-works → invite
+// (UI_SPEC §2). Sign-in (09.2) sits between welcome and the mess setup because
+// CreateMess needs an authenticated caller.
+enum _Step { welcome, signIn, explainer, setup, invite }
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({
     super.key,
+    required this.session,
     required this.messes,
+    required this.onSignIn,
     required this.locale,
     required this.onLocaleSelected,
     required this.onFinished,
   });
 
+  final SessionRepository session;
   final MessesRepository messes;
+
+  /// Runs interactive Google Sign-In (task 09.2). True once signed in.
+  final Future<bool> Function() onSignIn;
+
   final Locale locale;
   final ValueChanged<Locale> onLocaleSelected;
 
@@ -54,6 +65,39 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   String? _inviteLink;
   bool _submitting = false;
   ApiException? _error;
+
+  /// True while GetMe is re-checked right after sign-in, to route a returning
+  /// manager (who already has a mess) straight to their mess.
+  bool _routing = false;
+
+  /// After a successful sign-in the caller might be a brand-new manager or one
+  /// reinstalling. GetMe decides: an existing mess means skip setup entirely
+  /// and hand off to the shell; none means carry on to create one.
+  Future<void> _afterSignIn() async {
+    setState(() {
+      _routing = true;
+      _error = null;
+    });
+    try {
+      final session = await widget.session.getMe();
+      if (!mounted) return;
+      if (!session.needsOnboarding) {
+        // Existing mess: hand off to the shell. This widget goes away, so the
+        // routing flag is left as-is on purpose.
+        widget.onFinished(session.messes.first);
+        return;
+      }
+      setState(() {
+        _step = _Step.explainer;
+        _routing = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      // Keep _routing true so the error view (with retry) shows, rather than
+      // falling back to the sign-in screen and losing the failure.
+      setState(() => _error = e);
+    }
+  }
 
   Future<void> _createMess(String name) async {
     setState(() {
@@ -78,11 +122,33 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   @override
   Widget build(BuildContext context) {
+    // Re-checking GetMe after sign-in: a full-screen spinner, never a flash of
+    // the setup form the returning manager is about to skip.
+    if (_routing) {
+      if (_error != null) {
+        return Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(TinBelaSpace.xl),
+              child: ErrorState(error: _error, onRetry: _afterSignIn),
+            ),
+          ),
+        );
+      }
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return switch (_step) {
       _Step.welcome => WelcomeScreen(
           locale: widget.locale,
           onLocaleSelected: widget.onLocaleSelected,
-          onGetStarted: () => setState(() => _step = _Step.explainer),
+          onGetStarted: () => setState(() => _step = _Step.signIn),
+        ),
+      _Step.signIn => SignInScreen(
+          onSignIn: widget.onSignIn,
+          onSignedIn: _afterSignIn,
         ),
       _Step.explainer => HowItWorksScreen(
           onContinue: () => setState(() => _step = _Step.setup),

@@ -1,11 +1,9 @@
-import { PlaceholderNotice } from '@/lib/placeholder-notice';
+import { AppShowcase } from './_components/app-showcase';
+import { TapComparison } from './_components/tap-comparison';
 
-// Task 15.1 is ★ -- the founder writes this page.
-//
-// The brief is a constraint, not a suggestion: ONE idea, one screenshot, one
-// button. "স্বাভাবিক দিনে কিছুই করতে হবে না।" Not a feature list. The
-// structure below is the frame that copy goes into; the words are not an
-// agent's to choose.
+// The hero copy (h1 + tagline) is task 15.1 ★ — the founder's words, kept
+// verbatim. The screenshot + Play CTA (15.3) and the tap-comparison graphic
+// (15.2) are the `web` deliverables that fill the frame the brief left.
 export default function HomePage() {
   return (
     <div className="flex flex-col gap-xl">
@@ -16,17 +14,13 @@ export default function HomePage() {
         <p className="text-lg text-inkMuted">
           মেসের খাবার আর হিসাব — একটাই অ্যাপে।
         </p>
-
-        {/* TODO(15.3): Play badge CTA + one screenshot. */}
-        {/* TODO(15.2): the khata-vs-apps-vs-TinBela tap comparison graphic.
-            That graphic IS the differentiator; it is not decoration. */}
       </section>
 
-      <PlaceholderNotice
-        task="15.1"
-        owner="founder"
-        what="The home page copy — one idea, one screenshot, one button."
-      />
+      {/* 15.3 — one screenshot, one button. */}
+      <AppShowcase />
+
+      {/* 15.2 — the differentiating visual: the daily action count. */}
+      <TapComparison />
     </div>
   );
 }

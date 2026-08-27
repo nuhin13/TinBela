@@ -21,6 +21,10 @@ plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "9.1.0" apply false
     id("org.jetbrains.kotlin.android") version "2.4.0" apply false
+    // Firebase config processor (task 09.2). Declared here, applied in
+    // app/build.gradle.kts only when google-services.json is present, so a dev
+    // build without a Firebase project still compiles.
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
 include(":app")

@@ -23,6 +23,13 @@ type Deps struct {
 	RateLimiter *RateLimiter
 	Timeout     time.Duration
 	CORSOrigins []string
+
+	// The admin surface (Epic 16) reads across tenants through its own
+	// read-only pool (ADR-0016), gated by staff identity and an IP allow-list.
+	// Left zero, the staff set is empty and the admin surface is closed.
+	AdminPool *pgxpool.Pool
+	Staff     StaffPolicy
+	AdminIPs  IPAllowList
 }
 
 // Register mounts every Connect service on the mux.
@@ -68,9 +75,12 @@ func Register(mux *http.ServeMux, d Deps) {
 
 	// The admin surface reads across messes by definition, so it is mounted
 	// without the tenant interceptor and carries its own authorisation
-	// (Epic 16). Nothing here is a shortcut around tenant scope for the
-	// member-facing services.
-	unscoped := connect.WithInterceptors(common...)
+	// (Epic 16, ADR-0016): staff identity + IP allow-list in adminGuard, on top
+	// of the read-only tinbela_admin pool. Nothing here is a shortcut around
+	// tenant scope for the member-facing services.
+	admin := connect.WithInterceptors(
+		append(append([]connect.Interceptor{}, common...),
+			adminGuard(d.Staff, d.AdminIPs))...)
 
 	for _, h := range []struct {
 		path    string
@@ -79,7 +89,7 @@ func Register(mux *http.ServeMux, d Deps) {
 		mount(corev1connect.NewCoreServiceHandler(coreService{pool: d.Pool}, scoped)),
 		mount(mealsv1connect.NewMealsServiceHandler(mealsService{}, scoped)),
 		mount(moneyv1connect.NewMoneyServiceHandler(moneyService{}, scoped)),
-		mount(adminv1connect.NewAdminServiceHandler(adminService{}, unscoped)),
+		mount(adminv1connect.NewAdminServiceHandler(adminService{pool: d.AdminPool}, admin)),
 	} {
 		mux.Handle(h.path, h.handler)
 	}

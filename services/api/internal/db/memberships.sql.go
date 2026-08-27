@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const countActiveMembers = `-- name: CountActiveMembers :one
@@ -35,6 +36,44 @@ type GetMembershipParams struct {
 
 func (q *Queries) GetMembership(ctx context.Context, arg GetMembershipParams) (Membership, error) {
 	row := q.db.QueryRow(ctx, getMembership, arg.TenantID, arg.ID)
+	var i Membership
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.UserID,
+		&i.GroupID,
+		&i.Role,
+		&i.FeeCategory,
+		&i.DisplayName,
+		&i.JoinedAt,
+		&i.LeftAt,
+		&i.InviteToken,
+		&i.InviteOpenedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const leaveMembership = `-- name: LeaveMembership :one
+UPDATE memberships
+SET left_at = $1
+WHERE tenant_id = $2 AND id = $3 AND left_at IS NULL
+RETURNING id, tenant_id, user_id, group_id, role, fee_category, display_name, joined_at, left_at, invite_token, invite_opened_at, created_at
+`
+
+type LeaveMembershipParams struct {
+	LeftAt   pgtype.Date `json:"left_at"`
+	TenantID uuid.UUID   `json:"tenant_id"`
+	ID       uuid.UUID   `json:"id"`
+}
+
+// Soft leave (task 04.8): mark a member gone as of @left_at. Never a DELETE --
+// their prior meals still count toward the months they were present (P8), and
+// meal_exceptions references this row. The `left_at IS NULL` guard makes a
+// repeat call affect no rows rather than moving an existing leave date, so the
+// handler can tell "already left" from "just left".
+func (q *Queries) LeaveMembership(ctx context.Context, arg LeaveMembershipParams) (Membership, error) {
+	row := q.db.QueryRow(ctx, leaveMembership, arg.LeftAt, arg.TenantID, arg.ID)
 	var i Membership
 	err := row.Scan(
 		&i.ID,

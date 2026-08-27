@@ -18,16 +18,19 @@ type localised struct {
 // errorTable is the single source of truth for how a domain error reaches a
 // client. Keep it in step with docs/eng/errors.md.
 var errorTable = map[error]localised{
-	core.ErrNotFound:        {connect.CodeNotFound, "পাওয়া যায়নি", "Not found"},
-	core.ErrNotMember:       {connect.CodePermissionDenied, "আপনি এই মেসের সদস্য নন", "You are not a member of this mess"},
-	core.ErrNotManager:      {connect.CodePermissionDenied, "শুধু ম্যানেজার এটি করতে পারেন", "Only the manager can do this"},
-	core.ErrCutoffPassed:    {connect.CodeFailedPrecondition, "কাটঅফের সময় শেষ, ম্যানেজারকে বলুন", "Cutoff has passed — ask the manager"},
-	core.ErrPeriodClosed:    {connect.CodeFailedPrecondition, "এই মাস বন্ধ হয়ে গেছে", "This month is already closed"},
-	core.ErrPeriodOverlap:   {connect.CodeInvalidArgument, "সময়কাল আগের মাসের সাথে মিলে যাচ্ছে", "Period overlaps an existing one"},
-	core.ErrNoMeals:         {connect.CodeFailedPrecondition, "কোনো মিল নেই, মাস শেষ করা যাবে না", "No meals recorded — cannot close"},
-	core.ErrInvalidToken:    {connect.CodeUnauthenticated, "লিংকটি আর কাজ করছে না", "This link is no longer valid"},
-	core.ErrAlreadyVoided:   {connect.CodeFailedPrecondition, "এটি আগেই বাতিল হয়েছে", "Already voided"},
-	core.ErrUnauthenticated: {connect.CodeUnauthenticated, "আবার সাইন ইন করুন", "Please sign in again"},
+	core.ErrNotFound:           {connect.CodeNotFound, "পাওয়া যায়নি", "Not found"},
+	core.ErrNotMember:          {connect.CodePermissionDenied, "আপনি এই মেসের সদস্য নন", "You are not a member of this mess"},
+	core.ErrNotManager:         {connect.CodePermissionDenied, "শুধু ম্যানেজার এটি করতে পারেন", "Only the manager can do this"},
+	core.ErrCutoffPassed:       {connect.CodeFailedPrecondition, "কাটঅফের সময় শেষ, ম্যানেজারকে বলুন", "Cutoff has passed — ask the manager"},
+	core.ErrPeriodClosed:       {connect.CodeFailedPrecondition, "এই মাস বন্ধ হয়ে গেছে", "This month is already closed"},
+	core.ErrPeriodOverlap:      {connect.CodeInvalidArgument, "সময়কাল আগের মাসের সাথে মিলে যাচ্ছে", "Period overlaps an existing one"},
+	core.ErrNoMeals:            {connect.CodeFailedPrecondition, "কোনো মিল নেই, মাস শেষ করা যাবে না", "No meals recorded — cannot close"},
+	core.ErrInvalidToken:       {connect.CodeUnauthenticated, "লিংকটি আর কাজ করছে না", "This link is no longer valid"},
+	core.ErrAlreadyVoided:      {connect.CodeFailedPrecondition, "এটি আগেই বাতিল হয়েছে", "Already voided"},
+	core.ErrAlreadyLeft:        {connect.CodeFailedPrecondition, "এই সদস্য আগেই মেস ছেড়েছেন", "This member has already left"},
+	core.ErrCannotLeaveManager: {connect.CodeFailedPrecondition, "ম্যানেজারকে এভাবে সরানো যায় না", "The manager cannot be removed this way"},
+	core.ErrUnauthenticated:    {connect.CodeUnauthenticated, "আবার সাইন ইন করুন", "Please sign in again"},
+	core.ErrNotStaff:           {connect.CodePermissionDenied, "শুধু স্টাফ এটি দেখতে পারেন", "Staff access only"},
 
 	// docs/eng/errors.md specifies permission_denied with a generic
 	// "not found" MESSAGE. Following the table as written.

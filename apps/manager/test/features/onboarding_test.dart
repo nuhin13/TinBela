@@ -14,6 +14,7 @@ import 'package:tinbela_manager/core/widgets/demo_banner.dart';
 import 'package:tinbela_manager/core/widgets/tab_empty_states.dart';
 import 'package:tinbela_manager/features/onboarding/how_it_works_screen.dart';
 import 'package:tinbela_manager/features/onboarding/invite_screen.dart';
+import 'package:tinbela_manager/features/onboarding/sign_in_screen.dart';
 import 'package:tinbela_manager/features/onboarding/welcome_screen.dart';
 
 Widget _wrap(Widget child, {Locale locale = const Locale('bn')}) => MaterialApp(
@@ -102,6 +103,63 @@ void main() {
         expect(size.height, greaterThanOrEqualTo(TinBelaTouch.min),
             reason: '$label is under the minimum touch height');
       }
+    });
+  });
+
+  group('09.2 sign-in', () {
+    testWidgets('one tap signs in and hands off to the shell', (tester) async {
+      var signedIn = false;
+      await tester.pumpWidget(_wrap(SignInScreen(
+        onSignIn: () async => true,
+        onSignedIn: () => signedIn = true,
+      )));
+
+      await tester.tap(find.text('Google দিয়ে সাইন ইন'));
+      await tester.pumpAndSettle();
+
+      expect(signedIn, isTrue);
+    });
+
+    testWidgets('has no phone or OTP field — ADR-0009', (tester) async {
+      // The prototype drew phone + OTP. ADR-0009 replaced it with Google, so a
+      // text field on this screen would be the app re-growing the SMS path.
+      await tester.pumpWidget(_wrap(SignInScreen(
+        onSignIn: () async => true,
+        onSignedIn: () {},
+      )));
+
+      expect(find.byType(TextField), findsNothing);
+    });
+
+    testWidgets('backing out of the picker is not an error', (tester) async {
+      // Dismissing the Google sheet returns false. It is a decision, not a
+      // failure: no toast, and no hand-off.
+      var signedIn = false;
+      await tester.pumpWidget(_wrap(SignInScreen(
+        onSignIn: () async => false,
+        onSignedIn: () => signedIn = true,
+      )));
+
+      await tester.tap(find.text('Google দিয়ে সাইন ইন'));
+      await tester.pumpAndSettle();
+
+      expect(signedIn, isFalse);
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('a real failure shows a retry, never a dead end',
+        (tester) async {
+      var signedIn = false;
+      await tester.pumpWidget(_wrap(SignInScreen(
+        onSignIn: () async => throw Exception('network'),
+        onSignedIn: () => signedIn = true,
+      )));
+
+      await tester.tap(find.text('Google দিয়ে সাইন ইন'));
+      await tester.pumpAndSettle();
+
+      expect(signedIn, isFalse);
+      expect(find.text('সাইন ইন হয়নি, আবার চেষ্টা করুন'), findsOneWidget);
     });
   });
 
