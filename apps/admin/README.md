@@ -24,10 +24,19 @@ Flags and the kill switch are the only writes in the whole app.
 Every admin read is written to an audit log. You will need that for trust
 conversations later.
 
-## Initialise
+## Run
 
 ```bash
-cd apps
-pnpm create next-app@latest admin --typescript --tailwind --app --no-src-dir
-pnpm add @radix-ui/react-* class-variance-authority   # shadcn/ui base
+cd apps/admin
+pnpm install
+# point it at a running API (make dev in services/api) with a staff token:
+ADMIN_API_URL=http://localhost:8080 ADMIN_API_STAFF_TOKEN=dev:dev-staff pnpm dev
+# → http://localhost:3100
 ```
+
+The API must be started with the admin surface configured — `ADMIN_PG_DSN`,
+`STAFF_UIDS` (see `.env.example`) — or every call returns 403.
+
+`GetTenant`, the read-only tenant **inspector** (task 16.4), is founder-owned
+(★); its route is a placeholder until it lands. Everything else is built and
+verified end to end. See `AGENTS.md` for the rules.

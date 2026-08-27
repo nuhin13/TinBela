@@ -272,14 +272,23 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 ### EPIC 16 — Admin portal · *gate: answer "what did mess X do Tuesday" in 30s*
 > **Start on Day 5.** Without Django admin this is your only window into the
 > running system for the next nine days.
-- [ ] 16.1 Auth + IP allowlist
-- [ ] 16.2 Dashboard
-- [ ] 16.3 Tenant search
-- [ ] 16.4 ★ Read-only inspector
-- [ ] 16.5 User lookup
-- [ ] 16.6 Feature flags
-- [ ] 16.7 Metrics
-- [ ] 16.8 Admin audit log
+> **Backend + portal built and verified end to end** (API binary + Next.js
+> portal against real Postgres, screenshots taken). ADR-0016 adds a read-only
+> `tinbela_admin` role (BYPASSRLS, SELECT-only) so cross-tenant reads work while
+> "no mutation path" is a database grant. Only 16.4 (the inspector) is left — ★.
+- [x] 16.1 Auth + IP allowlist — `adminGuard`: staff Firebase-uid allow-list +
+      IP allow-list; a valid manager token gets 403 (verified live).
+- [x] 16.2 Dashboard — one screen: active messes · exceptions today · closes
+      this month · member links opened (Asia/Dhaka windows).
+- [x] 16.3 Tenant search — paginated `ListTenants`, name search, most-active
+      first, member_count + last_activity derived on read.
+- [ ] 16.4 ★ Read-only inspector — `GetTenant` intentionally unimplemented;
+      route + staff gate + read-only pool are in place for the founder.
+- [x] 16.5 User lookup — by phone / firebase uid; a miss is an empty answer.
+- [x] 16.6 Feature flags — `feature_flags` table + `SetFlag` (the only write)
+      + toggle UI incl. kill switch; takes effect on next read, no deploy.
+- [x] 16.7 Metrics — the dashboard counts (BRD §10 subset).
+- [x] 16.8 Admin audit log — `admin_audit_log`; every admin read writes a row.
 
 ### EPIC 17 — Telemetry · *gate: answer "how many exceptions yesterday"*
 - [ ] 17.1 Analytics wired
