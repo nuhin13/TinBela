@@ -237,16 +237,26 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [ ] 12.7 Instrument
 
 ### EPIC 13 — Members & settings · *gate: deletion works in-app and on web*
-- [ ] 13.1 Members list
-- [ ] 13.2 Add member
-- [ ] 13.3 Pattern editor
-- [ ] 13.4 Remove/leave
-- [ ] 13.5 Mess profile
-- [ ] 13.6 Slots & cutoffs
-- [ ] 13.7 Language + numerals
-- [ ] 13.8 ★ In-app account deletion
-- [ ] 13.9 Data export request
-- [ ] 13.10 About
+> The **আরও (More) tab** is now real (was a placeholder): a menu into members
+> and settings, built on the completed core service. Written without a Flutter
+> SDK in the container — verified by the hardcoded-string/colour guards
+> (green) + inspection; widget tests run in CI.
+- [x] 13.1 Members list — `members_screen.dart`, invite-state chips
+      (পাঠানো/খুলেছেন/যুক্ত) via `ListMembers`.
+- [x] 13.2 Add member — sheet (name + optional phone) → `AddMember` → invite
+      link with Messenger/WhatsApp/copy share.
+- [ ] 13.3 Pattern editor — deferred: needs `SetPatterns` (Epic 05, engine-blocked).
+- [ ] 13.4 Remove/leave — deferred: `LeaveMember` RPC exists (04.8) but its Dart
+      client isn't generated (`make proto`); no dead button shipped meanwhile.
+- [x] 13.5 Mess profile — `mess_profile_screen.dart`, name + kind (read-only;
+      rename needs an UpdateMess RPC).
+- [ ] 13.6 Slots & cutoffs — deferred: needs a slots-edit RPC (Epic 05).
+- [x] 13.7 Language + numerals — `language_screen.dart`; locale + a new
+      `NumeralsController` (local pref), instant, no restart.
+- [ ] 13.8 ★ In-app account deletion — founder-owned; reachable placeholder that
+      routes to the web deletion page in the meantime (`delete_account_screen.dart`).
+- [x] 13.9 Data export request — mailto path (v1.0), inside About.
+- [x] 13.10 About — version, Droid Builder, privacy/terms links.
 
 ### EPIC 14 — Member PWA · *gate: Lighthouse CI size + speed budget*
 - [ ] 14.1 `/m/[token]` route

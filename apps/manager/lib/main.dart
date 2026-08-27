@@ -21,12 +21,14 @@ import 'core/auth/firebase_auth_backend.dart';
 import 'core/config/app_config.dart';
 import 'core/data/repositories.dart';
 import 'core/settings/locale_store.dart';
+import 'core/settings/numerals_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final config = AppConfig.fromEnvironment();
   final localeStore = await LocaleStore.open();
+  final numeralsStore = await NumeralsStore.open();
 
   // Task 08.9 + 09.2: the session owns the token, its refresh, and sign-in.
   // Dev signs in as the seeded manager and touches no Firebase, so a dev build
@@ -52,8 +54,10 @@ Future<void> main() async {
   runApp(TinBelaApp(
     config: config,
     localeController: LocaleController(localeStore),
+    numerals: NumeralsController(numeralsStore),
     session: RemoteSessionRepository(client),
     messes: RemoteMessesRepository(client),
+    members: RemoteMembersRepository(client),
     onSignIn: auth.signIn,
   ));
 }

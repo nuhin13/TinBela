@@ -133,4 +133,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyMembersAction => 'Add a member';
+
+  @override
+  String get membersTitle => 'Members';
+
+  @override
+  String get addMember => 'Add member';
+
+  @override
+  String get addMemberSend => 'Add and send link';
+
+  @override
+  String get memberNameLabel => 'Name';
+
+  @override
+  String get memberPhoneOptional => 'Phone (optional)';
+
+  @override
+  String get roleManager => 'Manager';
+
+  @override
+  String get inviteSent => 'Sent';
+
+  @override
+  String get inviteOpened => 'Opened';
+
+  @override
+  String get inviteLinked => 'Joined';
+
+  @override
+  String get messProfileTitle => 'Mess profile';
+
+  @override
+  String get messNameLabel => 'Mess name';
+
+  @override
+  String get messKindLabel => 'Kind';
+
+  @override
+  String get messKindMess => 'Mess';
+
+  @override
+  String get languageTitle => 'Language & numbers';
+
+  @override
+  String get languageSectionLabel => 'Language';
+
+  @override
+  String get numeralsSectionLabel => 'Numbers';
+
+  @override
+  String get numeralsBangla => '১২৩ (Bangla)';
+
+  @override
+  String get numeralsLatin => '123 (Latin)';
+
+  @override
+  String get aboutTitle => 'About';
+
+  @override
+  String aboutVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get aboutDroidBuilder => 'Built by Droid Builder';
+
+  @override
+  String get aboutPrivacy => 'Privacy policy';
+
+  @override
+  String get aboutTerms => 'Terms';
+
+  @override
+  String get dataExportTitle => 'Data export';
+
+  @override
+  String get dataExportBody => 'Email us for a copy of all your data.';
+
+  @override
+  String get dataExportButton => 'Email to request data';
+
+  @override
+  String get dataExportSubject => 'Data export request';
+
+  @override
+  String get deleteAccountTitle => 'Delete account';
+
+  @override
+  String get deleteAccountPending =>
+      'Deleting your account is permanent — your mess, accounts and all data go for good. In-app deletion is being finalised; for now, request it on the web.';
+
+  @override
+  String get deleteAccountWebButton => 'Delete on the web';
 }

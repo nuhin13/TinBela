@@ -132,4 +132,97 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get emptyMembersAction => 'সদস্য যোগ করুন';
+
+  @override
+  String get membersTitle => 'সদস্য';
+
+  @override
+  String get addMember => 'সদস্য যোগ করুন';
+
+  @override
+  String get addMemberSend => 'যোগ করে লিংক পাঠান';
+
+  @override
+  String get memberNameLabel => 'নাম';
+
+  @override
+  String get memberPhoneOptional => 'ফোন (ঐচ্ছিক)';
+
+  @override
+  String get roleManager => 'ম্যানেজার';
+
+  @override
+  String get inviteSent => 'পাঠানো';
+
+  @override
+  String get inviteOpened => 'খুলেছেন';
+
+  @override
+  String get inviteLinked => 'যুক্ত';
+
+  @override
+  String get messProfileTitle => 'মেস প্রোফাইল';
+
+  @override
+  String get messNameLabel => 'মেসের নাম';
+
+  @override
+  String get messKindLabel => 'ধরন';
+
+  @override
+  String get messKindMess => 'মেস';
+
+  @override
+  String get languageTitle => 'ভাষা ও সংখ্যা';
+
+  @override
+  String get languageSectionLabel => 'ভাষা';
+
+  @override
+  String get numeralsSectionLabel => 'সংখ্যা';
+
+  @override
+  String get numeralsBangla => '১২৩ (বাংলা)';
+
+  @override
+  String get numeralsLatin => '123 (ইংরেজি)';
+
+  @override
+  String get aboutTitle => 'সম্পর্কে';
+
+  @override
+  String aboutVersion(String version) {
+    return 'সংস্করণ $version';
+  }
+
+  @override
+  String get aboutDroidBuilder => 'Droid Builder-এর তৈরি';
+
+  @override
+  String get aboutPrivacy => 'গোপনীয়তা নীতি';
+
+  @override
+  String get aboutTerms => 'শর্তাবলী';
+
+  @override
+  String get dataExportTitle => 'ডেটা এক্সপোর্ট';
+
+  @override
+  String get dataExportBody => 'আপনার সব তথ্যের একটি কপি চাইলে আমাদের ইমেইল করুন।';
+
+  @override
+  String get dataExportButton => 'ডেটা চেয়ে ইমেইল করুন';
+
+  @override
+  String get dataExportSubject => 'ডেটা এক্সপোর্টের অনুরোধ';
+
+  @override
+  String get deleteAccountTitle => 'অ্যাকাউন্ট মুছুন';
+
+  @override
+  String get deleteAccountPending =>
+      'অ্যাকাউন্ট মুছে ফেলা স্থায়ী — আপনার মেস, হিসাব ও সব তথ্য চিরতরে চলে যাবে। অ্যাপের ভেতরের মুছে ফেলার ধাপটি এখনো যুক্ত হচ্ছে; এই মুহূর্তে ওয়েবে গিয়ে অনুরোধ করুন।';
+
+  @override
+  String get deleteAccountWebButton => 'ওয়েবে মুছে ফেলুন';
 }

@@ -21,24 +21,30 @@ import 'core/data/repositories.dart';
 import 'core/domain/models.dart';
 import 'core/i18n/l10n/app_localizations.dart'; // run `flutter gen-l10n`
 import 'core/settings/locale_store.dart';
+import 'core/settings/numerals_store.dart';
 import 'core/theme/tokens.g.dart'; // run `make tokens` to generate
 import 'core/widgets/async_states.dart';
 import 'features/onboarding/onboarding_flow.dart';
+import 'features/settings/more_screen.dart';
 
 class TinBelaApp extends StatelessWidget {
   const TinBelaApp({
     super.key,
     required this.config,
     required this.localeController,
+    required this.numerals,
     required this.session,
     required this.messes,
+    required this.members,
     required this.onSignIn,
   });
 
   final AppConfig config;
   final LocaleController localeController;
+  final NumeralsController numerals;
   final SessionRepository session;
   final MessesRepository messes;
+  final MembersRepository members;
 
   /// Runs interactive Google Sign-In (task 09.2). True once signed in.
   final Future<bool> Function() onSignIn;
@@ -82,8 +88,10 @@ class TinBelaApp extends StatelessWidget {
       home: _Root(
         session: session,
         messes: messes,
+        members: members,
         onSignIn: onSignIn,
         localeController: localeController,
+        numerals: numerals,
       ),
     );
   }
@@ -99,14 +107,18 @@ class _Root extends StatefulWidget {
   const _Root({
     required this.session,
     required this.messes,
+    required this.members,
     required this.onSignIn,
     required this.localeController,
+    required this.numerals,
   });
 
   final SessionRepository session;
   final MessesRepository messes;
+  final MembersRepository members;
   final Future<bool> Function() onSignIn;
   final LocaleController localeController;
+  final NumeralsController numerals;
 
   @override
   State<_Root> createState() => _RootState();
@@ -134,8 +146,14 @@ class _RootState extends State<_Root> {
           body: AsyncStateView<Session>(
             snapshot: snapshot,
             onRetry: _reload,
-            builder: (context, session) =>
-                session.needsOnboarding ? _onboarding() : const HomeShell(),
+            builder: (context, session) => session.needsOnboarding
+                ? _onboarding()
+                : HomeShell(
+                    session: session,
+                    members: widget.members,
+                    localeController: widget.localeController,
+                    numerals: widget.numerals,
+                  ),
           ),
         );
       },
@@ -165,7 +183,18 @@ extension AppTabLabel on AppTab {
 }
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+  const HomeShell({
+    super.key,
+    required this.session,
+    required this.members,
+    required this.localeController,
+    required this.numerals,
+  });
+
+  final Session session;
+  final MembersRepository members;
+  final LocaleController localeController;
+  final NumeralsController numerals;
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -178,12 +207,17 @@ class _HomeShellState extends State<HomeShell> {
   //   0 → features/today/today_screen.dart      (Epic 10) ★ the product
   //   1 → features/grid/grid_screen.dart        (Epic 10.9)
   //   2 → features/accounts/accounts_screen.dart(Epic 11)
-  //   3 → features/settings/more_screen.dart    (Epic 13)
-  static const _tabs = <Widget>[
-    _Placeholder(tab: AppTab.today, epic: 'Epic 10 — the daily loop'),
-    _Placeholder(tab: AppTab.grid, epic: 'Epic 10.9 — khata grid fallback'),
-    _Placeholder(tab: AppTab.accounts, epic: 'Epic 11 — money & accounts'),
-    _Placeholder(tab: AppTab.more, epic: 'Epic 13 — members & settings'),
+  //   3 → the আরও tab — members & settings (Epic 13), below.
+  late final List<Widget> _tabs = [
+    const _Placeholder(tab: AppTab.today, epic: 'Epic 10 — the daily loop'),
+    const _Placeholder(tab: AppTab.grid, epic: 'Epic 10.9 — khata grid fallback'),
+    const _Placeholder(tab: AppTab.accounts, epic: 'Epic 11 — money & accounts'),
+    MoreScreen(
+      session: widget.session,
+      members: widget.members,
+      localeController: widget.localeController,
+      numerals: widget.numerals,
+    ),
   ];
 
   static const _icons = <(IconData, IconData)>[
