@@ -80,6 +80,11 @@ func TestAddLedgerEntry(t *testing.T) {
 	if got := foodRes.Msg.GetEntry().GetAmount().GetPaisa(); got != 125000 {
 		t.Errorf("food amount paisa = %d, want 125000", got)
 	}
+	// 06.9: the server formats display for the caller's locale (dev-manager is
+	// bn). ৳125000 paisa = ৳1,250, Bangla numerals.
+	if got := foodRes.Msg.GetEntry().GetAmount().GetDisplay(); got != "৳১,২৫০" {
+		t.Errorf("food amount display = %q, want ৳১,২৫০", got)
+	}
 	if got := foodRes.Msg.GetEntry().GetKind(); got != moneyv1.EntryKind_ENTRY_KIND_FOOD_COST {
 		t.Errorf("food kind = %v, want FOOD_COST", got)
 	}

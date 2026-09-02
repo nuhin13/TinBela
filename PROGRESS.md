@@ -184,7 +184,18 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [ ] 06.6 ★ Visible rounding remainder
 - [ ] 06.7 Deposit attribution
 - [ ] 06.8 Member statement
-- [ ] 06.9 Money formatting service
+- [x] 06.9 Money formatting service — `money.Format(paisa, bengaliNumerals)` /
+      `FormatForLocale(paisa, locale)`: the one place paisa becomes the string a
+      person reads (Invariant 1 — the server is the rendering edge). ৳ prefix,
+      paisa÷100, decimals only on a non-zero remainder (1240 → ৳১২.৪০, 4000 →
+      ৳৪০), South Asian lakh grouping (10000000 → ৳১,০০,০০০), sign for a member
+      who owes (-50000 → -৳৫০০); bn default, en swaps numerals only. Golden
+      vectors in `format_test.go`. Wired into `AddLedgerEntry`'s response so
+      `Money.display` is now filled (was the deliberate 06.1 gap); other money
+      responses adopt it as they land. **Reviewable convention:** lakh (2-2-3)
+      grouping vs Western 3-digit — every spec example is sub-lakh so both match;
+      lakh is the market-correct BDT choice. The client-side numeral toggle
+      (11.7 ★) is separate; the server default follows the caller's locale.
 
 ### EPIC 07 — Periods · *gate: reopen a closed month, identical numbers*
 - [ ] 07.1 Period lifecycle

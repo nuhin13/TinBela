@@ -15,6 +15,7 @@ import (
 
 	"github.com/droidbuilder/tinbela/services/api/internal/core"
 	"github.com/droidbuilder/tinbela/services/api/internal/invites"
+	"github.com/droidbuilder/tinbela/services/api/internal/money"
 
 	"github.com/droidbuilder/tinbela/services/api/internal/db"
 	corev1 "github.com/droidbuilder/tinbela/services/api/internal/gen/tinbela/core/v1"
@@ -811,7 +812,7 @@ func (moneyService) AddLedgerEntry(ctx context.Context, req *connect.Request[mon
 	}
 
 	return connect.NewResponse(&moneyv1.AddLedgerEntryResponse{
-		Entry: ledgerEntryProto(entry, memberName, displayNameFor(ctx, q, caller)),
+		Entry: ledgerEntryProto(entry, memberName, displayNameFor(ctx, q, caller), caller.Locale),
 	}), nil
 }
 func (moneyService) VoidLedgerEntry(context.Context, *connect.Request[moneyv1.VoidLedgerEntryRequest]) (*connect.Response[moneyv1.VoidLedgerEntryResponse], error) {
@@ -861,16 +862,19 @@ func protoEntryKind(s string) moneyv1.EntryKind {
 	}
 }
 
-// ledgerEntryProto maps a stored row to the contract. The Money carries only
-// paisa: the localised `display` is the money formatting service's job (06.9)
-// and `math` is for computed values (06.5 ★), not a raw recorded amount. A
-// freshly inserted row is never itself voided — that is a property of a later
+// ledgerEntryProto maps a stored row to the contract. The Money carries paisa
+// and its localised `display` (06.9, formatted for the caller's locale); `math`
+// is for computed values (06.5 ★), not a raw recorded amount, so it stays nil.
+// A freshly inserted row is never itself voided — that is a property of a later
 // void_of row pointing back at it, resolved when the ledger is listed.
-func ledgerEntryProto(e db.LedgerEntry, memberName, enteredByName string) *moneyv1.LedgerEntry {
+func ledgerEntryProto(e db.LedgerEntry, memberName, enteredByName, locale string) *moneyv1.LedgerEntry {
 	out := &moneyv1.LedgerEntry{
-		Id:                e.ID.String(),
-		Kind:              protoEntryKind(e.Kind),
-		Amount:            &corev1.Money{Paisa: e.AmountPaisa},
+		Id:   e.ID.String(),
+		Kind: protoEntryKind(e.Kind),
+		Amount: &corev1.Money{
+			Paisa:   e.AmountPaisa,
+			Display: money.FormatForLocale(e.AmountPaisa, locale),
+		},
 		MemberDisplayName: memberName,
 		EnteredByName:     enteredByName,
 		Voided:            e.VoidOf.Valid,
