@@ -496,14 +496,221 @@ type mealsService struct{}
 func (mealsService) SetPatterns(context.Context, *connect.Request[mealsv1.SetPatternsRequest]) (*connect.Response[mealsv1.SetPatternsResponse], error) {
 	return nil, notYet("05", "05.2")
 }
-func (mealsService) CreateException(context.Context, *connect.Request[mealsv1.CreateExceptionRequest]) (*connect.Response[mealsv1.CreateExceptionResponse], error) {
-	return nil, notYet("05", "05.3")
+func (mealsService) CreateException(ctx context.Context, req *connect.Request[mealsv1.CreateExceptionRequest]) (*connect.Response[mealsv1.CreateExceptionResponse], error) {
+	scope, err := requireManager(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := sameMess(req.Msg.GetMessId(), scope); err != nil {
+		return nil, err
+	}
+	caller, ok := CallerFrom(ctx)
+	if !ok {
+		return nil, core.ErrUnauthenticated
+	}
+	tx, ok := TxFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+	q := db.New(tx)
+
+	// The exception is attributed to a member; the lookup is tenant-scoped, so
+	// it both authorises the member is in this mess and gives the name to echo.
+	memberID, err := uuid.Parse(req.Msg.GetMembershipId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("membership_id is required"))
+	}
+	member, err := q.GetMembership(ctx, db.GetMembershipParams{TenantID: scope.TenantID, ID: memberID})
+	if err != nil {
+		return nil, core.ErrNotFound
+	}
+
+	action := req.Msg.GetAction()
+	actionStr := exceptionActionString(action)
+	if actionStr == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("action must be OFF, ON, SET_QTY or GUEST"))
+	}
+
+	// qty is meaningful only for SET_QTY (how many) and GUEST (how many extra
+	// plates); it is null for the on/off actions. A guest is at least one
+	// plate. The upper bound keeps a typo out of the int16 column.
+	var qty *int16
+	switch action {
+	case mealsv1.ExceptionAction_EXCEPTION_ACTION_SET_QTY:
+		n := req.Msg.GetQty()
+		if n < 0 || n > 99 {
+			return nil, connect.NewError(connect.CodeInvalidArgument,
+				errors.New("qty must be between 0 and 99"))
+		}
+		v := int16(n)
+		qty = &v
+	case mealsv1.ExceptionAction_EXCEPTION_ACTION_GUEST:
+		n := req.Msg.GetQty()
+		if n < 1 || n > 99 {
+			return nil, connect.NewError(connect.CodeInvalidArgument,
+				errors.New("a guest exception needs a qty between 1 and 99"))
+		}
+		v := int16(n)
+		qty = &v
+	}
+
+	// The range defaults to today (Asia/Dhaka, Invariant 5); an empty date_to
+	// means a single day.
+	from, err := exceptionDate(req.Msg.GetDateFrom().GetValue())
+	if err != nil {
+		return nil, err
+	}
+	to := from
+	if v := req.Msg.GetDateTo().GetValue(); v != "" {
+		to, err = exceptionDate(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if to.Before(from) {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("date_to cannot be before date_from"))
+	}
+
+	params := db.InsertMealExceptionParams{
+		ID:           uuid.New(),
+		TenantID:     scope.TenantID,
+		MembershipID: memberID,
+		DateFrom:     pgDate(from),
+		DateTo:       pgDate(to),
+		Action:       actionStr,
+		Qty:          qty,
+		MarkedBy:     caller.UserID,
+		// after_cutoff is the cutoff audit flag (05.7). Whether a mark lands
+		// after its slot's cutoff — and whether to refuse it — is the cutoff
+		// decision in Asia/Dhaka with clock-skew handling, task 05.6 ★. Until
+		// that lands, every mark is recorded as on-time; this is the seam.
+		AfterCutoff: false,
+	}
+
+	// An empty slot means every active slot. A named slot must belong to this
+	// mess: the FK alone would accept another tenant's slot id (RLS does not
+	// cover reference checks), so validate it against the tenant's own slots.
+	if s := req.Msg.GetSlotId(); s != "" {
+		slotID, perr := uuid.Parse(s)
+		if perr != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("slot_id is not a valid id"))
+		}
+		if !tenantOwnsSlot(ctx, q, scope.TenantID, slotID) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("slot_id is not a slot of this mess"))
+		}
+		params.SlotID = pgUUID(slotID)
+	}
+
+	// group_id (P3 institution batch) is never set by the v1.0 mess app and is
+	// ignored here.
+
+	ex, err := q.InsertMealException(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&mealsv1.CreateExceptionResponse{
+		Exception: exceptionProto(ex, member.DisplayName, displayNameFor(ctx, q, caller)),
+	}), nil
 }
 func (mealsService) VoidException(context.Context, *connect.Request[mealsv1.VoidExceptionRequest]) (*connect.Response[mealsv1.VoidExceptionResponse], error) {
 	return nil, notYet("05", "05.5")
 }
 func (mealsService) GetDay(context.Context, *connect.Request[mealsv1.GetDayRequest]) (*connect.Response[mealsv1.GetDayResponse], error) {
 	return nil, notYet("05", "05.4")
+}
+
+// exceptionDate parses a contract Date ("YYYY-MM-DD") in Asia/Dhaka, or
+// returns today there when the field is empty (Invariant 5).
+func exceptionDate(v string) (time.Time, error) {
+	if v == "" {
+		return todayDhaka(), nil
+	}
+	d, err := time.ParseInLocation("2006-01-02", v, dhakaLoc())
+	if err != nil {
+		return time.Time{}, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("date must be YYYY-MM-DD"))
+	}
+	return d, nil
+}
+
+// exceptionActionString maps the contract action to the meal_exceptions CHECK
+// value. UNSPECIFIED returns "" so the caller can reject it.
+func exceptionActionString(a mealsv1.ExceptionAction) string {
+	switch a {
+	case mealsv1.ExceptionAction_EXCEPTION_ACTION_OFF:
+		return "OFF"
+	case mealsv1.ExceptionAction_EXCEPTION_ACTION_ON:
+		return "ON"
+	case mealsv1.ExceptionAction_EXCEPTION_ACTION_SET_QTY:
+		return "SET_QTY"
+	case mealsv1.ExceptionAction_EXCEPTION_ACTION_GUEST:
+		return "GUEST"
+	default:
+		return ""
+	}
+}
+
+// protoExceptionAction is the reverse: the stored string back to the enum.
+func protoExceptionAction(s string) mealsv1.ExceptionAction {
+	switch s {
+	case "OFF":
+		return mealsv1.ExceptionAction_EXCEPTION_ACTION_OFF
+	case "ON":
+		return mealsv1.ExceptionAction_EXCEPTION_ACTION_ON
+	case "SET_QTY":
+		return mealsv1.ExceptionAction_EXCEPTION_ACTION_SET_QTY
+	case "GUEST":
+		return mealsv1.ExceptionAction_EXCEPTION_ACTION_GUEST
+	default:
+		return mealsv1.ExceptionAction_EXCEPTION_ACTION_UNSPECIFIED
+	}
+}
+
+// tenantOwnsSlot reports whether slotID is an active slot of this tenant. The
+// slot_id FK is checked as the table owner and so does not see RLS; this is
+// the tenant scope that keeps one mess's exception off another's slot.
+func tenantOwnsSlot(ctx context.Context, q *db.Queries, tenantID, slotID uuid.UUID) bool {
+	slots, err := q.ListActiveSlots(ctx, tenantID)
+	if err != nil {
+		return false
+	}
+	for _, s := range slots {
+		if s.ID == slotID {
+			return true
+		}
+	}
+	return false
+}
+
+// exceptionProto maps a stored row to the contract. A freshly inserted row is
+// never itself voided; that is a property of a later void_of row (05.5 ★).
+func exceptionProto(e db.MealException, memberName, markedByName string) *mealsv1.Exception {
+	out := &mealsv1.Exception{
+		Id:                e.ID.String(),
+		MembershipId:      e.MembershipID.String(),
+		MemberDisplayName: memberName,
+		Action:            protoExceptionAction(e.Action),
+		MarkedByName:      markedByName,
+		AfterCutoff:       e.AfterCutoff,
+		Range: &corev1.DateRange{
+			From: &corev1.Date{Value: e.DateFrom.Time.Format("2006-01-02")},
+			To:   &corev1.Date{Value: e.DateTo.Time.Format("2006-01-02")},
+		},
+	}
+	if e.SlotID.Valid {
+		out.SlotId = uuid.UUID(e.SlotID.Bytes).String()
+	}
+	if e.Qty != nil {
+		out.Qty = int32(*e.Qty)
+	}
+	if e.CreatedAt.Valid {
+		out.CreatedAt = e.CreatedAt.Time.Format(time.RFC3339)
+	}
+	return out
 }
 
 // moneyService implements tinbela.money.v1.MoneyService (Epics 06, 07).

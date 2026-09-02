@@ -132,8 +132,22 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 
 ### EPIC 05 — Meal service · *gate: 30-day scenario matches hand-computed sheet*
 - [ ] 05.1 Slots + cutoffs
-- [ ] 05.2 `SetPatterns`, all slots ON by default
-- [ ] 05.3 `CreateException`
+- [ ] 05.2 `SetPatterns`, all slots ON by default — **deferred:** needs a new
+      `patterns` upsert query, and sqlc is unavailable in this container to
+      regenerate `internal/db`. Land it where `make sqlc` can run.
+- [x] 05.3 `CreateException` — records an OFF/ON/SET_QTY/GUEST exception as an
+      append-only `meal_exceptions` row via the existing `InsertMealException`.
+      Manager-gated + tenant-scoped; member looked up in-tenant (name echoed);
+      action validated, qty required 1–99 for GUEST / 0–99 for SET_QTY and null
+      for on/off; `date_from` defaults to today (Asia/Dhaka), `date_to` to a
+      single day, `to >= from`; an empty `slot_id` means every active slot and a
+      named one is checked against the tenant's own slots (the FK doesn't see
+      RLS). `group_id` (P3) is ignored. Tests in `create_exception_test.go`
+      (real Postgres — CI/Docker-gated here): OFF + GUEST happy paths,
+      append-only row count, the reject cases, two-tenant isolation.
+      **Seam:** `after_cutoff` is recorded `false` and no cutoff is enforced —
+      the Asia/Dhaka cutoff decision is 05.6 ★ and its audit is 05.7. Member
+      self-marking stays manager-only until the ownership check lands (role.go).
 - [ ] 05.4 Date ranges + null slot
 - [ ] 05.5 ★ `VoidException`
 - [ ] 05.6 ★ Cutoff in Asia/Dhaka, clock-skew tested
