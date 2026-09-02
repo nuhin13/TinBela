@@ -509,8 +509,103 @@ func (mealsService) GetDay(context.Context, *connect.Request[mealsv1.GetDayReque
 // moneyService implements tinbela.money.v1.MoneyService (Epics 06, 07).
 type moneyService struct{}
 
-func (moneyService) AddLedgerEntry(context.Context, *connect.Request[moneyv1.AddLedgerEntryRequest]) (*connect.Response[moneyv1.AddLedgerEntryResponse], error) {
-	return nil, notYet("06", "06.2")
+func (moneyService) AddLedgerEntry(ctx context.Context, req *connect.Request[moneyv1.AddLedgerEntryRequest]) (*connect.Response[moneyv1.AddLedgerEntryResponse], error) {
+	scope, err := requireManager(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := sameMess(req.Msg.GetMessId(), scope); err != nil {
+		return nil, err
+	}
+	caller, ok := CallerFrom(ctx)
+	if !ok {
+		return nil, core.ErrUnauthenticated
+	}
+	tx, ok := TxFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+	q := db.New(tx)
+
+	// v1.0 records two kinds by hand: a mess food cost, and a member deposit.
+	// SHARED_COST / RENT_PAYOUT are P2; ADJUST is written by close (06.6 ★),
+	// never by a manager.
+	kind := req.Msg.GetKind()
+	if kind != moneyv1.EntryKind_ENTRY_KIND_FOOD_COST && kind != moneyv1.EntryKind_ENTRY_KIND_DEPOSIT {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("kind must be FOOD_COST or DEPOSIT"))
+	}
+
+	// Strictly positive: a correction is a void (06.3) that inserts its own
+	// negative counterpart, never a negative entry typed in here. That is what
+	// keeps the ledger append-only and auditable (Invariant 2).
+	amount := req.Msg.GetAmountPaisa()
+	if amount <= 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("amount_paisa must be greater than zero; a correction is a void, not a negative entry"))
+	}
+
+	// An entry belongs to a day, decided server-side (Invariant 5): default to
+	// today in Asia/Dhaka. Refuse a date outside the open period so a cost can
+	// never land in a month already closed and made immutable (Invariants 2, 3).
+	occurred := todayDhaka()
+	if v := req.Msg.GetOccurredOn().GetValue(); v != "" {
+		d, perr := time.ParseInLocation("2006-01-02", v, dhakaLoc())
+		if perr != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument,
+				errors.New("occurred_on must be YYYY-MM-DD"))
+		}
+		occurred = d
+	}
+	period, err := q.GetOpenPeriod(ctx, scope.TenantID)
+	if err != nil || occurred.Before(period.StartDate.Time) || occurred.After(period.EndDate.Time) {
+		return nil, core.ErrPeriodClosed
+	}
+
+	params := db.InsertLedgerEntryParams{
+		ID:          uuid.New(),
+		TenantID:    scope.TenantID,
+		Kind:        entryKindString(kind),
+		AmountPaisa: amount,
+		OccurredOn:  pgDate(occurred),
+		EnteredBy:   caller.UserID,
+	}
+	if note := strings.TrimSpace(req.Msg.GetNote()); note != "" {
+		params.Note = &note
+	}
+
+	// A category labels a food cost (06.2). It is meaningless on a deposit,
+	// which is attributed to a member instead.
+	memberName := ""
+	switch kind {
+	case moneyv1.EntryKind_ENTRY_KIND_FOOD_COST:
+		if cat := strings.TrimSpace(req.Msg.GetCategory()); cat != "" {
+			params.Category = &cat
+		}
+	case moneyv1.EntryKind_ENTRY_KIND_DEPOSIT:
+		memberID, perr := uuid.Parse(req.Msg.GetMembershipId())
+		if perr != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument,
+				errors.New("membership_id is required for a deposit"))
+		}
+		// Tenant-scoped: this both authorises the member is in this mess and
+		// gives us the name to echo back.
+		m, merr := q.GetMembership(ctx, db.GetMembershipParams{TenantID: scope.TenantID, ID: memberID})
+		if merr != nil {
+			return nil, core.ErrNotFound
+		}
+		params.MembershipID = pgUUID(memberID)
+		memberName = m.DisplayName
+	}
+
+	entry, err := q.InsertLedgerEntry(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&moneyv1.AddLedgerEntryResponse{
+		Entry: ledgerEntryProto(entry, memberName, displayNameFor(ctx, q, caller)),
+	}), nil
 }
 func (moneyService) VoidLedgerEntry(context.Context, *connect.Request[moneyv1.VoidLedgerEntryRequest]) (*connect.Response[moneyv1.VoidLedgerEntryResponse], error) {
 	return nil, notYet("06", "06.3")
@@ -526,6 +621,66 @@ func (moneyService) ClosePeriod(context.Context, *connect.Request[moneyv1.CloseP
 }
 func (moneyService) GetStatement(context.Context, *connect.Request[moneyv1.GetStatementRequest]) (*connect.Response[moneyv1.GetStatementResponse], error) {
 	return nil, notYet("07", "07.5")
+}
+
+// entryKindString maps the two v1.0 hand-recorded kinds to the ledger's CHECK
+// values. Only FOOD_COST and DEPOSIT reach it; AddLedgerEntry rejects the rest.
+func entryKindString(k moneyv1.EntryKind) string {
+	switch k {
+	case moneyv1.EntryKind_ENTRY_KIND_FOOD_COST:
+		return "FOOD_COST"
+	case moneyv1.EntryKind_ENTRY_KIND_DEPOSIT:
+		return "DEPOSIT"
+	default:
+		return ""
+	}
+}
+
+// protoEntryKind is the reverse: the stored string back to the contract enum.
+func protoEntryKind(s string) moneyv1.EntryKind {
+	switch s {
+	case "FOOD_COST":
+		return moneyv1.EntryKind_ENTRY_KIND_FOOD_COST
+	case "DEPOSIT":
+		return moneyv1.EntryKind_ENTRY_KIND_DEPOSIT
+	case "SHARED_COST":
+		return moneyv1.EntryKind_ENTRY_KIND_SHARED_COST
+	case "RENT_PAYOUT":
+		return moneyv1.EntryKind_ENTRY_KIND_RENT_PAYOUT
+	case "ADJUST":
+		return moneyv1.EntryKind_ENTRY_KIND_ADJUST
+	default:
+		return moneyv1.EntryKind_ENTRY_KIND_UNSPECIFIED
+	}
+}
+
+// ledgerEntryProto maps a stored row to the contract. The Money carries only
+// paisa: the localised `display` is the money formatting service's job (06.9)
+// and `math` is for computed values (06.5 ★), not a raw recorded amount. A
+// freshly inserted row is never itself voided — that is a property of a later
+// void_of row pointing back at it, resolved when the ledger is listed.
+func ledgerEntryProto(e db.LedgerEntry, memberName, enteredByName string) *moneyv1.LedgerEntry {
+	out := &moneyv1.LedgerEntry{
+		Id:                e.ID.String(),
+		Kind:              protoEntryKind(e.Kind),
+		Amount:            &corev1.Money{Paisa: e.AmountPaisa},
+		MemberDisplayName: memberName,
+		EnteredByName:     enteredByName,
+		Voided:            e.VoidOf.Valid,
+	}
+	if e.Category != nil {
+		out.Category = *e.Category
+	}
+	if e.MembershipID.Valid {
+		out.MembershipId = uuid.UUID(e.MembershipID.Bytes).String()
+	}
+	if e.OccurredOn.Valid {
+		out.OccurredOn = &corev1.Date{Value: e.OccurredOn.Time.Format("2006-01-02")}
+	}
+	if e.Note != nil {
+		out.Note = *e.Note
+	}
+	return out
 }
 
 // adminService (tinbela.admin.v1.AdminService, Epic 16) is implemented in

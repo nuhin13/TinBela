@@ -144,8 +144,26 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [ ] 05.11 Integration tests
 
 ### EPIC 06 — Money · *gate: conservation asserted at the API boundary*
-- [ ] 06.1 `AddLedgerEntry`
-- [ ] 06.2 Categories
+- [x] 06.1 `AddLedgerEntry` — records FOOD_COST + DEPOSIT (v1.0 kinds only),
+      int64 paisa, append-only via the existing `InsertLedgerEntry`.
+      Manager-gated + tenant-scoped; amount must be strictly positive
+      (corrections are a void, 06.3, not a negative entry — Invariant 2);
+      DEPOSIT requires an in-tenant `membership_id`; `occurred_on` defaults to
+      today (Asia/Dhaka, Invariant 5) and must fall in the OPEN period, so a
+      cost can never land in a closed/immutable month. Tests in
+      `add_ledger_entry_test.go` (real Postgres — run in CI, Docker-gated here):
+      food+deposit happy paths, append-only row count, zero/negative reject,
+      deposit-without-member, P2-kind reject, out-of-period reject, two-tenant
+      isolation. `role_test.go` updated (manager now reaches the handler, so an
+      empty request is invalid_argument rather than the old unimplemented).
+      `Money.display` is intentionally left empty — server-side formatting is
+      06.9; `MathExplain` is 06.5 ★ (computed fields, not a raw amount).
+- [~] 06.2 Categories — seeded, localised bn/en expense set (বাজার, চাল, মাছ …)
+      as `money.ExpenseCategories()`, the single source of truth, with tests
+      (`categories_test.go`). **Not yet reachable by clients:** exposing the
+      list needs a `ListCategories` RPC (a proto change — deferred pending
+      approval); the handler accepts a free-form `category` on FOOD_COST for
+      now ("editable later").
 - [ ] 06.3 ★ Void
 - [ ] 06.4 ★ `GetAccounts`
 - [ ] 06.5 ★ `MathExplain` on every money field

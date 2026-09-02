@@ -81,14 +81,16 @@ func TestMemberCannotWriteLedger(t *testing.T) {
 		t.Fatalf("member AddLedgerEntry: code = %v (err %v), want permission_denied", got, err)
 	}
 
-	// The rejection must come from the role check, not from the handler
-	// being a stub. A manager reaches the stub and is told "unimplemented" --
-	// which is exactly how we know the member never reached it.
+	// The rejection must come from the role check, not from the handler. A
+	// manager passes the role gate and reaches AddLedgerEntry itself (06.1),
+	// where this empty request — no kind, no amount — is turned back as an
+	// invalid argument. That the manager gets that far, and the member does
+	// not, is exactly how we know the member never reached the handler.
 	managerWrite := entry()
 	as(managerUID, messID)(managerWrite)
 	_, err = money.AddLedgerEntry(ctx, managerWrite)
-	if got := connect.CodeOf(err); got != connect.CodeUnimplemented {
-		t.Fatalf("manager AddLedgerEntry: code = %v (err %v), want unimplemented (Epic 06 stub)", got, err)
+	if got := connect.CodeOf(err); got != connect.CodeInvalidArgument {
+		t.Fatalf("manager AddLedgerEntry: code = %v (err %v), want invalid_argument (reached the handler)", got, err)
 	}
 
 	// And the member is not simply locked out of the mess: reading is the
