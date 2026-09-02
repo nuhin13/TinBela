@@ -1,15 +1,21 @@
 import type { Metadata } from 'next';
 
-import { PlaceholderNotice } from '@/lib/placeholder-notice';
+import { languageAlternates } from '@/lib/i18n';
+import { messages } from '@/lib/messages';
 
-export const metadata: Metadata = { title: 'শর্তাবলী · টিনবেলা' };
+import { LegalPlaceholder } from '../_components/legal-placeholder';
+import { MarketingShell } from '../_components/marketing-shell';
+
+export const metadata: Metadata = {
+  title: messages.bn.meta.termsTitle,
+  alternates: { canonical: '/terms', languages: languageAlternates('terms') },
+};
 
 // Task 15.5 is ★.
 export default function TermsPage() {
   return (
-    <article className="flex flex-col gap-lg">
-      <h1 className="text-2xl font-semibold">শর্তাবলী</h1>
-      <PlaceholderNotice task="15.5" owner="founder" what="Terms of service." />
-    </article>
+    <MarketingShell locale="bn" page="terms">
+      <LegalPlaceholder locale="bn" kind="terms" />
+    </MarketingShell>
   );
 }

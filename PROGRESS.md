@@ -280,12 +280,21 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [ ] 15.4 ★ `/privacy`
 - [ ] 15.5 ★ `/terms`
 - [ ] 15.6 ★ `/delete-account`
-- [~] 15.7 SEO + OG images — full metadata (title template, canonical, robots,
-      openGraph bn_BD, twitter card, metadataBase) + a generated
+- [x] 15.7 bn/en + SEO + OG images — full metadata (title template, canonical,
+      robots, openGraph bn_BD, twitter card, metadataBase) + a generated
       `opengraph-image.tsx` rendering the brand + tagline in Hind Siliguri
       (visually verified — Bangla conjuncts correct). Messenger preview done.
-      **NOT done:** bn/en locale routing — the site is bn-only; en routing is a
-      larger i18n lift beyond the Messenger-preview done-when. Flagged.
+      **bn/en locale routing now landed:** bn stays canonical at the root, en
+      mirrors under `/en` (`lib/i18n.ts` + `lib/messages.ts`, one shell +
+      shared content components). hreflang alternates (bn-BD / en-US /
+      x-default), per-page canonicals, og:locale + alternate, an `<html lang>`
+      override on the en subtree, and a plain-link language toggle (no client
+      JS — the 3G budget). Verified: `next build` green (all 8 marketing routes
+      prerender static, First Load JS unchanged at 106 kB), lint + tsc clean.
+      **Needs founder sign-off:** the English hero line + tagline are a faithful
+      translation of the ★ 15.1 Bangla, not founder-authored — flagged in
+      `lib/messages.ts`. The Play-required legal pages (15.4-15.6 ★) stay
+      placeholders in both locales; no policy text was invented.
 
 ### EPIC 16 — Admin portal · *gate: answer "what did mess X do Tuesday" in 30s*
 > **Start on Day 5.** Without Django admin this is your only window into the

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Hind_Siliguri } from 'next/font/google';
 
+import { languageAlternates } from '@/lib/i18n';
 import { color } from '@/lib/tokens';
 
 import './globals.css';
@@ -32,13 +33,18 @@ export const metadata: Metadata = {
   description: 'মেসের খাবার আর হিসাব — একটাই অ্যাপে। স্বাভাবিক দিনে কিছুই করতে হবে না।',
   applicationName: 'টিনবেলা',
   manifest: '/manifest.webmanifest',
-  alternates: { canonical: '/' },
+  // bn is canonical at the root; en is the translation at /en (task 15.7).
+  // The hreflang alternates let a crawler serve the right language and stop
+  // the two pages competing as duplicates.
+  alternates: { canonical: '/', languages: languageAlternates('') },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
     siteName: 'টিনবেলা',
-    // bn-BD is the audience; the app and this site are Bangla-first.
+    // bn-BD is the audience; the app and this site are Bangla-first. en_US is
+    // offered as the alternate so a share of the /en page previews in English.
     locale: 'bn_BD',
+    alternateLocale: 'en_US',
     url: '/',
     title: 'টিনবেলা — স্বাভাবিক দিনে কিছুই করতে হবে না।',
     description: 'মেসের খাবার আর হিসাব — একটাই অ্যাপে।',

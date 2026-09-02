@@ -1,4 +1,6 @@
 import { formatCount, toBanglaDigits } from '@/lib/bn';
+import type { Locale } from '@/lib/i18n';
+import { messages } from '@/lib/messages';
 
 // Task 15.2 — the khata-vs-apps-vs-TinBela comparison. This is THE
 // differentiating visual, not decoration (EPICS 15.2): the whole product is
@@ -19,24 +21,25 @@ type Row = {
   readonly hero?: boolean;
 };
 
-const ROWS: readonly Row[] = [
-  { name: 'কাগজের খাতা', cost: 'প্রতিদিন হাতে লেখা, প্রতি বেলায়', actions: 3 },
-  { name: 'অন্য অ্যাপ', cost: 'প্রতিদিন প্রত্যেকের জন্য ট্যাপ', actions: 3 },
-  { name: 'টিনবেলা', cost: 'ডিফল্ট প্যাটার্ন নিজেই হিসাব রাখে', actions: 0, hero: true },
-];
-
 // A normal day has three meals; three marks is "every meal, by hand".
 const MARKS_PER_DAY = 3;
 
-export function TapComparison() {
+export function TapComparison({ locale }: { locale: Locale }) {
+  const t = messages[locale].comparison;
+  const rows: readonly Row[] = [
+    { name: t.khata.name, cost: t.khata.cost, actions: 3 },
+    { name: t.otherApps.name, cost: t.otherApps.cost, actions: 3 },
+    { name: t.tinbela.name, cost: t.tinbela.cost, actions: 0, hero: true },
+  ];
+
   return (
     <section aria-labelledby="tap-comparison-heading" className="flex flex-col gap-lg">
       <h2 id="tap-comparison-heading" className="text-2xl font-semibold">
-        স্বাভাবিক দিনে কয়টা কাজ?
+        {t.heading}
       </h2>
 
       <ul className="flex flex-col gap-md">
-        {ROWS.map((row) => (
+        {rows.map((row) => (
           <li
             key={row.name}
             className={
@@ -57,29 +60,26 @@ export function TapComparison() {
             </div>
 
             <div className="flex items-center gap-md">
-              <Marks actions={row.actions} hero={row.hero} />
-              <Count actions={row.actions} hero={row.hero} />
+              <Marks actions={row.actions} locale={locale} />
+              <Count actions={row.actions} locale={locale} hero={row.hero} />
             </div>
           </li>
         ))}
       </ul>
 
-      <p className="text-sm text-inkMuted">
-        ব্যতিক্রম — কারো অফ বা গেস্ট — হলে মাত্র ১ ট্যাপ। বাকি সব দিন শূন্য।
-      </p>
+      <p className="text-sm text-inkMuted">{t.footnote}</p>
     </section>
   );
 }
 
 // The marks a day costs. Filled dots for hand-work; an empty strip with a
 // check for the day TinBela leaves you nothing to do.
-function Marks({ actions, hero }: { actions: number; hero?: boolean }) {
+function Marks({ actions, locale }: { actions: number; locale: Locale }) {
+  const t = messages[locale].comparison;
+
   if (actions === 0) {
     return (
-      <span
-        className="flex items-center gap-xs text-primary"
-        aria-label="কিছু করার নেই"
-      >
+      <span className="flex items-center gap-xs text-primary" aria-label={t.nothingToDo}>
         <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" aria-hidden="true">
           <path
             d="M5 10.5l3.5 3.5L15 6.5"
@@ -89,16 +89,14 @@ function Marks({ actions, hero }: { actions: number; hero?: boolean }) {
             strokeLinejoin="round"
           />
         </svg>
-        <span className="text-sm font-medium">কিছু করার নেই</span>
+        <span className="text-sm font-medium">{t.nothingToDo}</span>
       </span>
     );
   }
 
+  const count = locale === 'bn' ? toBanglaDigits(String(actions)) : String(actions);
   return (
-    <span
-      className="flex gap-xs"
-      aria-label={`প্রতিদিন ${toBanglaDigits(String(actions))}টি কাজ`}
-    >
+    <span className="flex gap-xs" aria-label={t.tapsPerDay(count)}>
       {Array.from({ length: MARKS_PER_DAY }).map((_, i) => (
         <span
           key={i}
@@ -115,7 +113,7 @@ function Marks({ actions, hero }: { actions: number; hero?: boolean }) {
 }
 
 // The count a normal day costs, per day. Zero is the headline.
-function Count({ actions, hero }: { actions: number; hero?: boolean }) {
+function Count({ actions, locale, hero }: { actions: number; locale: Locale; hero?: boolean }) {
   return (
     <span className="flex items-baseline gap-xs">
       <span
@@ -123,9 +121,9 @@ function Count({ actions, hero }: { actions: number; hero?: boolean }) {
           hero ? 'text-3xl font-semibold text-primary' : 'text-3xl font-semibold text-ink'
         }
       >
-        {formatCount(actions)}
+        {formatCount(actions, locale)}
       </span>
-      <span className="text-sm text-inkMuted">/দিন</span>
+      <span className="text-sm text-inkMuted">{messages[locale].comparison.perDay}</span>
     </span>
   );
 }

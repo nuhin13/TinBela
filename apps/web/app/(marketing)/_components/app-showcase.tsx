@@ -10,19 +10,23 @@
 // brand-guidelines image that ships with the store listing (task 19.x); until
 // then this is a plain, honest button, not a fake of Google's asset.
 
+import type { Locale } from '@/lib/i18n';
+import { messages } from '@/lib/messages';
+
 // TODO(19.x): confirm the final Play listing id when the listing is created.
 const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.droidbuilder.tinbela';
 
-export function AppShowcase() {
+export function AppShowcase({ locale }: { locale: Locale }) {
+  const t = messages[locale].showcase;
   return (
     <section className="flex flex-col items-center gap-lg sm:flex-row sm:items-center sm:justify-between">
+      {/* The mock depicts the Bangla app itself, so its labels stay bn in every
+          locale — it is a picture of the product, and aria-hidden besides. */}
       <TodayScreenMock />
 
       <div className="flex flex-col items-center gap-md sm:items-start">
-        <p className="text-center text-lg font-medium sm:text-left">
-          খুলেই দেখবেন — আজকের হিসাব শেষ।
-        </p>
-        <PlayButton />
+        <p className="text-center text-lg font-medium sm:text-left">{t.blurb}</p>
+        <PlayButton label={t.playCta} />
       </div>
     </section>
   );
@@ -62,7 +66,7 @@ function TodayScreenMock() {
   );
 }
 
-function PlayButton() {
+function PlayButton({ label }: { label: string }) {
   return (
     <a
       href={PLAY_URL}
@@ -72,7 +76,7 @@ function PlayButton() {
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden="true">
         <path d="M4 3.5v17a1 1 0 001.5.87l14-8.5a1 1 0 000-1.74l-14-8.5A1 1 0 004 3.5z" />
       </svg>
-      <span className="text-base font-semibold">Google Play-তে পাওয়া যাচ্ছে</span>
+      <span className="text-base font-semibold">{label}</span>
     </a>
   );
 }
