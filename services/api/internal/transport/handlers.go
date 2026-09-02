@@ -494,8 +494,67 @@ func displayNameFor(ctx context.Context, q *db.Queries, c Caller) string {
 // mealsService implements tinbela.meals.v1.MealsService (Epic 05).
 type mealsService struct{}
 
-func (mealsService) SetPatterns(context.Context, *connect.Request[mealsv1.SetPatternsRequest]) (*connect.Response[mealsv1.SetPatternsResponse], error) {
-	return nil, notYet("05", "05.2")
+func (mealsService) SetPatterns(ctx context.Context, req *connect.Request[mealsv1.SetPatternsRequest]) (*connect.Response[mealsv1.SetPatternsResponse], error) {
+	scope, err := requireManager(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := sameMess(req.Msg.GetMessId(), scope); err != nil {
+		return nil, err
+	}
+	tx, ok := TxFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+	q := db.New(tx)
+
+	// The pattern belongs to a member of this mess; the lookup is tenant-scoped.
+	// A new member needs NO pattern at all to be correct — the engine defaults a
+	// missing pattern to "on, every day, one plate" (Invariant 3, the zero-write
+	// wedge). SetPatterns only records a deliberate change to that default.
+	memberID, err := uuid.Parse(req.Msg.GetMembershipId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("membership_id is required"))
+	}
+	if _, err := q.GetMembership(ctx, db.GetMembershipParams{TenantID: scope.TenantID, ID: memberID}); err != nil {
+		return nil, core.ErrNotFound
+	}
+
+	// The change takes effect today (Asia/Dhaka, Invariant 5). effective_from
+	// keeps past days on their old pattern rather than rewriting history.
+	effective := pgDate(todayDhaka())
+
+	out := make([]*mealsv1.Pattern, 0, len(req.Msg.GetPatterns()))
+	for _, p := range req.Msg.GetPatterns() {
+		slotID, perr := uuid.Parse(p.GetSlotId())
+		if perr != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("slot_id is not a valid id"))
+		}
+		if !tenantOwnsSlot(ctx, q, scope.TenantID, slotID) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("slot_id is not a slot of this mess"))
+		}
+		if dow := p.GetDowMask(); dow < 0 || dow > 127 {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("dow_mask must be between 0 and 127"))
+		}
+		if qty := p.GetQty(); qty < 0 || qty > 9 {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("qty must be between 0 and 9"))
+		}
+		row, err := q.UpsertPattern(ctx, db.UpsertPatternParams{
+			ID:            uuid.New(),
+			TenantID:      scope.TenantID,
+			MembershipID:  memberID,
+			SlotID:        slotID,
+			DowMask:       int16(p.GetDowMask()),
+			Qty:           int16(p.GetQty()),
+			EffectiveFrom: effective,
+		})
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, patternProto(row))
+	}
+
+	return connect.NewResponse(&mealsv1.SetPatternsResponse{Patterns: out}), nil
 }
 func (mealsService) CreateException(ctx context.Context, req *connect.Request[mealsv1.CreateExceptionRequest]) (*connect.Response[mealsv1.CreateExceptionResponse], error) {
 	scope, err := requireManager(ctx)
@@ -622,6 +681,16 @@ func (mealsService) VoidException(context.Context, *connect.Request[mealsv1.Void
 }
 func (mealsService) GetDay(context.Context, *connect.Request[mealsv1.GetDayRequest]) (*connect.Response[mealsv1.GetDayResponse], error) {
 	return nil, notYet("05", "05.4")
+}
+
+// patternProto maps a stored pattern row to the contract.
+func patternProto(p db.Pattern) *mealsv1.Pattern {
+	return &mealsv1.Pattern{
+		MembershipId: p.MembershipID.String(),
+		SlotId:       p.SlotID.String(),
+		DowMask:      int32(p.DowMask),
+		Qty:          int32(p.Qty),
+	}
 }
 
 // exceptionDate parses a contract Date ("YYYY-MM-DD") in Asia/Dhaka, or

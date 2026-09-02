@@ -37,3 +37,19 @@ INSERT INTO meal_exceptions (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
 )
 RETURNING *;
+
+-- name: UpsertPattern :one
+-- Law 1: a member's weekly default (dow_mask bit 0 = Saturday, 127 = every
+-- day; qty = plates on an active day). patterns is NOT append-only — a change
+-- updates the row for its effective date. effective_from lets a change apply
+-- forward without rewriting past days: ListPatterns picks the latest
+-- effective_from <= the query date, so history is preserved by a new date, not
+-- a mutated one.
+INSERT INTO patterns (
+    id, tenant_id, membership_id, slot_id, dow_mask, qty, effective_from
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+)
+ON CONFLICT (membership_id, slot_id, effective_from)
+DO UPDATE SET dow_mask = EXCLUDED.dow_mask, qty = EXCLUDED.qty
+RETURNING *;

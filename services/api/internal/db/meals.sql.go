@@ -245,3 +245,54 @@ func (q *Queries) ListPatterns(ctx context.Context, arg ListPatternsParams) ([]P
 	}
 	return items, nil
 }
+
+const upsertPattern = `-- name: UpsertPattern :one
+INSERT INTO patterns (
+    id, tenant_id, membership_id, slot_id, dow_mask, qty, effective_from
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+)
+ON CONFLICT (membership_id, slot_id, effective_from)
+DO UPDATE SET dow_mask = EXCLUDED.dow_mask, qty = EXCLUDED.qty
+RETURNING id, tenant_id, membership_id, slot_id, dow_mask, qty, effective_from, created_at
+`
+
+type UpsertPatternParams struct {
+	ID            uuid.UUID   `json:"id"`
+	TenantID      uuid.UUID   `json:"tenant_id"`
+	MembershipID  uuid.UUID   `json:"membership_id"`
+	SlotID        uuid.UUID   `json:"slot_id"`
+	DowMask       int16       `json:"dow_mask"`
+	Qty           int16       `json:"qty"`
+	EffectiveFrom pgtype.Date `json:"effective_from"`
+}
+
+// Law 1: a member's weekly default (dow_mask bit 0 = Saturday, 127 = every
+// day; qty = plates on an active day). patterns is NOT append-only — a change
+// updates the row for its effective date. effective_from lets a change apply
+// forward without rewriting past days: ListPatterns picks the latest
+// effective_from <= the query date, so history is preserved by a new date, not
+// a mutated one.
+func (q *Queries) UpsertPattern(ctx context.Context, arg UpsertPatternParams) (Pattern, error) {
+	row := q.db.QueryRow(ctx, upsertPattern,
+		arg.ID,
+		arg.TenantID,
+		arg.MembershipID,
+		arg.SlotID,
+		arg.DowMask,
+		arg.Qty,
+		arg.EffectiveFrom,
+	)
+	var i Pattern
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.MembershipID,
+		&i.SlotID,
+		&i.DowMask,
+		&i.Qty,
+		&i.EffectiveFrom,
+		&i.CreatedAt,
+	)
+	return i, err
+}

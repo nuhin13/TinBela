@@ -136,9 +136,18 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
       `slot_count` picks from the end so a 2-meal mess gets lunch+dinner. The
       done-when (3 slots with sane cutoffs on creation) is met. Full slot-edit
       CRUD needs a new RPC (proto change) — deferred.
-- [ ] 05.2 `SetPatterns`, all slots ON by default — **deferred:** needs a new
-      `patterns` upsert query, and sqlc is unavailable in this container to
-      regenerate `internal/db`. Land it where `make sqlc` can run.
+- [x] 05.2 `SetPatterns`, all slots ON by default — a new member needs no
+      pattern to be correct (the engine defaults a missing pattern to
+      on/every-day/one-plate — the zero-write wedge, Invariant 3); SetPatterns
+      records a deliberate change. Manager-gated + tenant-scoped; member and
+      each slot validated in-tenant; `dow_mask` 0–127, `qty` 0–9. Writes via a
+      new `UpsertPattern` query (added to `queries/meals.sql`, `internal/db`
+      regenerated with sqlc v1.31.1) keyed on `(membership_id, slot_id,
+      effective_from=today)`, so re-setting a slot the same day updates the row
+      instead of appending — and a later day starts a new effective_from,
+      preserving history for `ListPatterns`. Tests in `set_patterns_test.go`
+      (real Postgres — CI/Docker-gated here): set two slots, persistence +
+      values, same-day upsert (no duplicate), and the reject cases.
 - [x] 05.3 `CreateException` — records an OFF/ON/SET_QTY/GUEST exception as an
       append-only `meal_exceptions` row via the existing `InsertMealException`.
       Manager-gated + tenant-scoped; member looked up in-tenant (name echoed);
