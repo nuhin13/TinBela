@@ -30,7 +30,7 @@ jobs:
         with: { fetch-depth: 0 }   # buf breaking needs history
 
       - uses: actions/setup-go@v5
-        with: { go-version: "1.23", cache-dependency-path: services/api/go.sum }
+        with: { go-version: "1.25", cache-dependency-path: services/api/go.sum }
 
       - uses: bufbuild/buf-setup-action@v1
 

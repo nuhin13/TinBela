@@ -2,21 +2,10 @@
 #   GO-ID  owner  reason
 #
 # An entry here is a DECISION, not a mute button. Anything not listed fails
-# the build. Delete an entry the moment its blocker clears -- an allowlist
-# that outlives its reason is how a real finding gets ignored.
-
-# BOTH entries below are blocked on the same thing: their fixed versions
-# require Go >= 1.25, and this repo pins Go 1.23 in four places
-# (.mise.toml, .github/workflows/ci.yml, services/api/go.mod, go.work).
-# Taking either fix means bumping the project toolchain, which is a founder
-# decision. Raised 2026-08-25, not yet made. Both entries go away together.
-
-# SQL injection via placeholder confusion with dollar-quoted string literals.
-# Fixed in pgx v5.9.2. The reachable trace is dbtest.ApplyMigrations -- test
-# harness code building migration SQL, not a request path carrying user
-# input -- which lowers the urgency but does not make it acceptable to keep.
-GO-2026-5004  founder  fix needs pgx v5.9.2, which needs Go >= 1.25
-
-# Infinite loop on invalid input in golang.org/x/text. Fixed in v0.39.0.
-# Reached through pgx's connection config parsing.
-GO-2026-5970  founder  fix needs x/text v0.39.0, which needs Go >= 1.25
+# the build, and check-vulns.sh also complains when an allowlisted finding
+# stops being reported -- a stale entry is how the next real finding gets
+# waved through.
+#
+# Empty is the correct state. GO-2026-5004 (pgx SQL injection) and
+# GO-2026-5970 (x/text infinite loop) lived here until the Go 1.25 toolchain
+# bump on 2026-08-25 made their fixed versions installable.

@@ -64,7 +64,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInReassure => 'One tap — no OTP, no password.';
 
   @override
-  String get signInFailed => "Sign-in didn't complete. Try again.";
+  String get signInFailed => 'Sign-in didn\'t complete. Try again.';
 
   @override
   String get languageBangla => 'বাংলা';
