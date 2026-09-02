@@ -131,7 +131,11 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [ ] 04.9 ★ Account deletion policy
 
 ### EPIC 05 — Meal service · *gate: 30-day scenario matches hand-computed sheet*
-- [ ] 05.1 Slots + cutoffs
+- [x] 05.1 Slots + cutoffs — `CreateMess` seeds the three default slots
+      (সকাল 07:00 · দুপুর 10:30 · রাত 17:00) with per-slot `cutoff_local`;
+      `slot_count` picks from the end so a 2-meal mess gets lunch+dinner. The
+      done-when (3 slots with sane cutoffs on creation) is met. Full slot-edit
+      CRUD needs a new RPC (proto change) — deferred.
 - [ ] 05.2 `SetPatterns`, all slots ON by default — **deferred:** needs a new
       `patterns` upsert query, and sqlc is unavailable in this container to
       regenerate `internal/db`. Land it where `make sqlc` can run.
@@ -148,10 +152,15 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
       **Seam:** `after_cutoff` is recorded `false` and no cutoff is enforced —
       the Asia/Dhaka cutoff decision is 05.6 ★ and its audit is 05.7. Member
       self-marking stays manager-only until the ownership check lands (role.go).
-- [ ] 05.4 Date ranges + null slot
+- [~] 05.4 Date ranges + null slot — the API half ships with 05.3:
+      `CreateException` accepts a `date_from`..`date_to` range and treats an
+      empty `slot_id` as every active slot. Verifying **Property P4** end to end
+      needs `Materialize` (Epic 02 ★), so the property assertion is engine-gated.
 - [ ] 05.5 ★ `VoidException`
 - [ ] 05.6 ★ Cutoff in Asia/Dhaka, clock-skew tested
-- [ ] 05.7 `after_cutoff` audit
+- [~] 05.7 `after_cutoff` audit — `marked_by` is recorded on every exception
+      (the attributable half). The `after_cutoff` stamp itself waits on the
+      Asia/Dhaka cutoff decision, 05.6 ★.
 - [ ] 05.8 `GetDay`
 - [ ] 05.9 Bulk endpoint with `group_id`
 - [ ] 05.10 Day flags
@@ -170,8 +179,8 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
       deposit-without-member, P2-kind reject, out-of-period reject, two-tenant
       isolation. `role_test.go` updated (manager now reaches the handler, so an
       empty request is invalid_argument rather than the old unimplemented).
-      `Money.display` is intentionally left empty — server-side formatting is
-      06.9; `MathExplain` is 06.5 ★ (computed fields, not a raw amount).
+      `Money.display` is now populated by the 06.9 formatter (below);
+      `MathExplain` is 06.5 ★ (computed fields, not a raw amount).
 - [~] 06.2 Categories — seeded, localised bn/en expense set (বাজার, চাল, মাছ …)
       as `money.ExpenseCategories()`, the single source of truth, with tests
       (`categories_test.go`). **Not yet reachable by clients:** exposing the
@@ -182,8 +191,12 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
 - [ ] 06.4 ★ `GetAccounts`
 - [ ] 06.5 ★ `MathExplain` on every money field
 - [ ] 06.6 ★ Visible rounding remainder
-- [ ] 06.7 Deposit attribution
-- [ ] 06.8 Member statement
+- [x] 06.7 Deposit attribution — satisfied by 06.1: a DEPOSIT must carry an
+      in-tenant `membership_id` (validated in the handler AND by the table's
+      `CHECK (kind <> 'DEPOSIT' OR membership_id IS NOT NULL)`), and the
+      "deposit without a member" case in `add_ledger_entry_test.go` enforces it.
+- [ ] 06.8 Member statement — deferred: the current-period statement is derived
+      (needs `Settle`, Epic 02 ★), and the query is new (sqlc unavailable here).
 - [x] 06.9 Money formatting service — `money.Format(paisa, bengaliNumerals)` /
       `FormatForLocale(paisa, locale)`: the one place paisa becomes the string a
       person reads (Invariant 1 — the server is the rendering edge). ৳ prefix,
@@ -198,8 +211,14 @@ Tick as you go. Full task detail in `docs/product/EPICS.md`.
       (11.7 ★) is separate; the server default follows the caller's locale.
 
 ### EPIC 07 — Periods · *gate: reopen a closed month, identical numbers*
-- [ ] 07.1 Period lifecycle
-- [ ] 07.2 `PreviewClose`
+- [x] 07.1 Period lifecycle — `CreateMess` auto-opens the first period (the
+      current Asia/Dhaka month) and reports its `current_period_id`; the
+      non-overlap guard is the periods table's `EXCLUDE USING gist` constraint
+      (migration 000001), enforced at the DB even against a raw insert.
+      `period_lifecycle_test.go` proves both: one OPEN period on creation, an
+      overlapping insert rejected, a later non-overlapping month accepted.
+- [ ] 07.2 `PreviewClose` — deferred: it previews `Settle`'s output, so it is
+      engine-gated (Epic 02 ★).
 - [ ] 07.3 ★ `ClosePeriod`
 - [ ] 07.4 ★ Immutability proven
 - [ ] 07.5 ★ Property P7
